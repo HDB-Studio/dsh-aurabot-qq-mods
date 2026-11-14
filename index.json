@@ -37,6 +37,38 @@
       "publishedAt": "2026-11-12T04:18:02.203Z"
     },
     {
+      "id": "api-pool",
+      "name": "关键词调 API 池",
+      "version": "1.6.0",
+      "description": "只在指定群里，群友发某个关键词就自动调用设定好的接口，把返回的文本/图片/视频/音频直接发回群里。纯机械触发，不经过模型、不费 token。",
+      "category": "tool",
+      "tags": [
+        "API",
+        "关键词",
+        "群功能",
+        "图片",
+        "文本"
+      ],
+      "author": "Epiphuany",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.0",
+      "requires": [],
+      "capabilities": [
+        "network",
+        "filesystem",
+        "plugin-internals"
+      ],
+      "replacesBuiltin": false,
+      "tag": "api-pool-v1.6.0",
+      "file": "api-pool-v1.6.0.zip",
+      "path": "api-pool-v1.6.0/api-pool-v1.6.0.zip",
+      "size": 240298,
+      "sha256": "d9f49b21abf8d20bf242e9054955400e7322d2d7c596bf8db0e772f0b2ecf07b",
+      "commit": "454909c6c262af59fb57643d8b0b1b5768371c5d",
+      "publishedAt": "2026-11-14T15:04:10.453Z"
+    },
+    {
       "id": "aura-mimo",
       "name": "aura-mimo",
       "version": "1.1.2",
@@ -1819,5 +1851,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-14T14:01:53.278Z"
+  "generatedAt": "2026-11-14T15:04:10.453Z"
 }
