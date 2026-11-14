@@ -480,7 +480,7 @@
     {
       "id": "feed",
       "name": "喂食",
-      "version": "3.2.0",
+      "version": "3.2.1",
       "description": "按作息饿、会自己找零食也会喊饿。饿了有曲线、吃了有反应，还带一块能投喂她、她会回话的面板。",
       "category": "social",
       "tags": [
@@ -503,13 +503,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "feed-v3.2.0",
-      "file": "feed-v3.2.0.zip",
-      "path": "feed-v3.2.0/feed-v3.2.0.zip",
-      "size": 23370,
-      "sha256": "1dd1fa76a7c07945708d0097ae66393be8c889a098b8847fc4e55d8ffead5354",
-      "commit": "ab7e148627f9599f97c8f3f3809c17b6cc9de167",
-      "publishedAt": "2026-11-08T19:15:21.180Z"
+      "tag": "feed-v3.2.1",
+      "file": "feed-v3.2.1.zip",
+      "path": "feed-v3.2.1/feed-v3.2.1.zip",
+      "size": 23372,
+      "sha256": "cc3554619dd34ae43bfe9d18b510fd1228537e355c00ad79df077dff4772502b",
+      "commit": "c3b02b3fbb259ff65e83294ee8f165226b3dba8e",
+      "publishedAt": "2026-11-14T20:20:43.701Z"
     },
     {
       "id": "file-inbox",
@@ -1851,5 +1851,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-14T19:17:12.007Z"
+  "generatedAt": "2026-11-14T20:20:43.701Z"
 }
