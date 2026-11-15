@@ -326,7 +326,7 @@
     {
       "id": "callme",
       "name": "语音通话",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "在 Windows 上用自己的 QQ 账号拨 QQ 语音通话：私聊通话、群语音（把 @ 她的人一起拉进来）、随时挂断。",
       "category": "social",
       "tags": [
@@ -345,13 +345,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "callme-v1.0.0",
-      "file": "callme-v1.0.0.zip",
-      "path": "callme-v1.0.0/callme-v1.0.0.zip",
-      "size": 13977,
-      "sha256": "fa1c207fa66ae7987dd017f2bf10a0d33e98f8bfd9242c3666b3ac0917598b34",
-      "commit": "e3a5e951415823eac3e17afc0a753cec21edaa1c",
-      "publishedAt": "2026-11-13T13:00:10.141Z"
+      "tag": "callme-v1.0.1",
+      "file": "callme-v1.0.1.zip",
+      "path": "callme-v1.0.1/callme-v1.0.1.zip",
+      "size": 14212,
+      "sha256": "51199ffe8677a726494442622905f7d405578b8a01618dddd61c77e32b1210c9",
+      "commit": "f36a8ce56f0abf436e00803e2abbb8decc0cf9c9",
+      "publishedAt": "2026-11-15T17:35:37.510Z"
     },
     {
       "id": "companion-bond",
@@ -1617,7 +1617,7 @@
     {
       "id": "tieba-reader",
       "name": "逛贴吧（只读）",
-      "version": "1.5.3",
+      "version": "1.5.4",
       "description": "只读搜索和浏览贴吧，也可按兴趣向主人私聊分享。",
       "category": "platform",
       "tags": [
@@ -1638,13 +1638,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "tieba-reader-v1.5.3",
-      "file": "tieba-reader-v1.5.3.zip",
-      "path": "tieba-reader-v1.5.3/tieba-reader-v1.5.3.zip",
-      "size": 126798,
-      "sha256": "b258c204bc319c9447e752400e681bce5e01fee91fbdbb0f2af4cd823b1f486f",
-      "commit": "27031062ec9bb208936f24b99b9b31b5fe6700c0",
-      "publishedAt": "2026-11-14T07:18:07.768Z"
+      "tag": "tieba-reader-v1.5.4",
+      "file": "tieba-reader-v1.5.4.zip",
+      "path": "tieba-reader-v1.5.4/tieba-reader-v1.5.4.zip",
+      "size": 128015,
+      "sha256": "8d14d2e5de8d856d3f43a46043e61ce4526c56883ec7ca68aef7268d46852bbf",
+      "commit": "f36a8ce56f0abf436e00803e2abbb8decc0cf9c9",
+      "publishedAt": "2026-11-15T17:35:37.510Z"
     },
     {
       "id": "token-budget",
@@ -1942,5 +1942,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T17:35:03.904Z"
+  "generatedAt": "2026-11-15T17:35:37.510Z"
 }
