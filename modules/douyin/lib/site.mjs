@@ -113,6 +113,25 @@ export const VERIFY_PROBE = `(() => {
   return t || '页面弹了验证码'
 })()`
 
+/**
+ * 私信分享接口的回执校验：HTTP 200 不等于成功。
+ * - 带 x-tt-verify-passport-decision：账号被要求验证；
+ * - 没有 status_code 或不是数字：发送结果不确定（不能当成功，也不能重试造成重复）；
+ * - status_code 明确为 0：成功；非 0：业务失败。
+ */
+export function checkShareReceipt(r) {
+  if (!r) throw new Error('点了分享，但没等到抖音私信的回应')
+  if (r.status !== 200) throw new Error(`抖音私信没发出去（HTTP ${r.status}）`)
+  const headers = Object.fromEntries(Object.entries(r.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
+  if (headers['x-tt-verify-passport-decision']) throw Object.assign(new Error('抖音拦下了分享并返回账号验证标记，请在手机抖音检查账号安全或实名状态'), { code: 'verify' })
+  const raw = r.json?.status_code
+  if (raw === undefined || raw === null) throw Object.assign(new Error('分享回执里没有 status_code，发送结果不确定'), { code: 'share_uncertain' })
+  const code = Number(raw)
+  if (!Number.isFinite(code)) throw Object.assign(new Error('分享回执的 status_code 不是数字，发送结果不确定'), { code: 'share_uncertain' })
+  if (code !== 0) throw Object.assign(new Error(r.json?.status_msg || `分享失败（${code}）`), { code })
+  return { ok: true }
+}
+
 export function createSite({ browser, log }) {
   const b = browser
 
@@ -295,7 +314,10 @@ export function createSite({ browser, log }) {
           if (!visible(n)) return false
           const m = of(n)
           if (m && ((want.secUid && m.sec === want.secUid) || (want.uid && m.uid === want.uid))) return true
-          return (n.innerText || '').trim() === '@' + want.nickname
+          const text = (n.innerText || '').replace(/\s+/g, ' ').replace(/\u00a0/g, ' ').trim()
+          const name = '@' + want.nickname
+          // 候选行后面常跟粉丝数 / 认证说明：允许后缀和空白，不能只认完全相等。
+          return text === name || text.startsWith(name + ' ') || text.startsWith(name + '·') || text.startsWith(name + '　')
         })
         if (!hit) return { ok: false, listed: true }
         // 只做记号，点击交给 CDP 真鼠标：以前在页面里 dispatchEvent，平台改版后可能不认。
@@ -325,11 +347,19 @@ export function createSite({ browser, log }) {
     await sleep(500 + Math.random() * 800)
     // 发送：点评论框右边的红色箭头（打了字才出现，是那一排图标里最右边的一个）。页面看不见时回车不管用，所以不靠回车
     const marked = await b.evaluate(`(() => {
-      // 先找带明确标记 / aria 文案的发送按钮；没有再用原来的「输入框上方那排图标最右边」启发式
-      const explicit = document.querySelector('[data-e2e="comment-submit"], [data-e2e="comment-post"], [data-e2e="comment-publish"], button[aria-label*="发送"], button[aria-label*="发布"], [role="button"][aria-label*="发送"]')
-      let bar = document.querySelector(${JSON.stringify(COMMENT_BOX)})
+      // 发送按钮只允许在当前评论框容器里找：页面上别处也有「发送」按钮（私信等），不能误点。
+      const root = document.querySelector(${JSON.stringify(COMMENT_BOX)})
+      if (!root) return false
+      const scope = root.closest(${JSON.stringify(COMMENT_BOX)}) || root
+      let bar = scope
       for (let i = 0; i < 3 && bar; i++) bar = bar.parentElement
-      const icons = bar ? [...bar.querySelectorAll('span')].filter((n) => n.querySelector('svg') && n.getBoundingClientRect().width > 10) : []
+      const usable = (n) => {
+        const r = n.getBoundingClientRect()
+        return r.width > 0 && r.height > 0 && !n.disabled && n.getAttribute('aria-disabled') !== 'true' && !n.closest('[disabled],[aria-disabled="true"]')
+      }
+      // 先找带明确标记 / aria 文案的发送按钮；没有再用原来的「输入框上方那排图标最右边」启发式。
+      const explicit = [...scope.querySelectorAll('[data-e2e="comment-submit"], [data-e2e="comment-post"], [data-e2e="comment-publish"], button[aria-label*="发送"], button[aria-label*="发布"], [role="button"][aria-label*="发送"]')].find(usable) || null
+      const icons = bar ? [...bar.querySelectorAll('span')].filter((n) => n.querySelector('svg') && usable(n)) : []
       const send = explicit || icons.sort((x, y) => x.getBoundingClientRect().x - y.getBoundingClientRect().x).at(-1)
       if (send) send.setAttribute('data-aurabot', 'send')
       return Boolean(send)
@@ -412,13 +442,7 @@ export function createSite({ browser, log }) {
       const resp = b.waitResponse(sent, 12000)
       await b.press('[data-aurabot="share-to"]')
       const r = await resp
-      if (!r) throw new Error('点了分享，但没等到抖音私信的回应')
-      if (r.status !== 200) throw new Error(`抖音私信没发出去（HTTP ${r.status}）`)
-      // HTTP 200 也可能是账号验证 / 业务失败：以前只看状态码会把这种当成功。
-      const headers = Object.fromEntries(Object.entries(r.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
-      if (headers['x-tt-verify-passport-decision']) throw Object.assign(new Error('抖音拦下了分享并返回账号验证标记，请在手机抖音检查账号安全或实名状态'), { code: 'verify' })
-      const code = Number(r.json?.status_code ?? 0)
-      if (Number.isFinite(code) && code !== 0) throw Object.assign(new Error(r.json?.status_msg || `分享失败（${code}）`), { code })
+      checkShareReceipt(r)
     }
     return { ok: true, already }
   }

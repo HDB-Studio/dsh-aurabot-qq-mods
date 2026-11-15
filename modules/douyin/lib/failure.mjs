@@ -17,10 +17,12 @@ const NETWORK_RE = /没等到|超时|没响应|接口返回|HTTP|网络|连接|�
 export function classifyFailure(error) {
   const message = String(error?.message ?? error ?? '')
   const code = error?.code
-  if (code === 'verify' || RISK_RE.test(message)) return 'risk'
-  if (code === 'dm_uncertain' || code === 'uncertain' || UNCERTAIN_RE.test(message)) return 'uncertain'
-  if (code === 'login' || LOGIN_RE.test(message)) return 'login'
+  if (code === 'verify') return 'risk'
+  // 先判额度 / 间隔：消息里常有「限制」二字（如「今日额度限制」），不能被 RISK_RE 抢成风控。
   if (LIMIT_RE.test(message)) return 'limit'
+  if (RISK_RE.test(message)) return 'risk'
+  if (code === 'dm_uncertain' || code === 'uncertain' || code === 'share_uncertain' || UNCERTAIN_RE.test(message)) return 'uncertain'
+  if (code === 'login' || LOGIN_RE.test(message)) return 'login'
   if (TARGET_RE.test(message)) return 'target'
   if (SELECTOR_RE.test(message)) return 'selector'
   if (NETWORK_RE.test(message)) return 'network'
