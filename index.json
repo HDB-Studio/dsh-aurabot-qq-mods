@@ -917,7 +917,7 @@
     {
       "id": "meme-wiki",
       "name": "梗百科",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "description": "本地梗库：聊天里命中就把词条塞进上下文；词条从梗站按需导入，不随模块分发。",
       "category": "social",
       "tags": [
@@ -935,13 +935,13 @@
         "filesystem"
       ],
       "replacesBuiltin": false,
-      "tag": "meme-wiki-v0.2.6",
-      "file": "meme-wiki-v0.2.6.zip",
-      "path": "meme-wiki-v0.2.6/meme-wiki-v0.2.6.zip",
-      "size": 31628,
-      "sha256": "90fe695e276309235acba783d0da44bef356948301c9480034b7c34b473967f2",
-      "commit": "3827609ce75cd6cb67d60ebd01b7a62f0d9cf448",
-      "publishedAt": "2026-11-06T06:03:15.318Z"
+      "tag": "meme-wiki-v0.2.7",
+      "file": "meme-wiki-v0.2.7.zip",
+      "path": "meme-wiki-v0.2.7/meme-wiki-v0.2.7.zip",
+      "size": 31765,
+      "sha256": "00c7d8a1df7f70fb836955b064381b627779dbe64ca08152f9d5129ae2cf8daa",
+      "commit": "09806fda44a65222f7dfd0644d5dacf824f1f5d8",
+      "publishedAt": "2026-11-15T12:06:06.976Z"
     },
     {
       "id": "mijia",
@@ -1910,5 +1910,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T10:33:09.220Z"
+  "generatedAt": "2026-11-15T12:06:06.976Z"
 }
