@@ -792,6 +792,36 @@
       "publishedAt": "2026-11-14T18:44:29.036Z"
     },
     {
+      "id": "local-diary",
+      "name": "私人日记",
+      "version": "1.0.0",
+      "description": "每天写一篇 md 私人日记到本地文件夹，写给她自己看；随插件备份一起搬家",
+      "category": "tool",
+      "tags": [
+        "日记",
+        "本地",
+        "记忆"
+      ],
+      "author": "KonaLz",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.0",
+      "requires": [],
+      "capabilities": [
+        "filesystem",
+        "process",
+        "plugin-internals"
+      ],
+      "replacesBuiltin": false,
+      "tag": "local-diary-v1.0.0",
+      "file": "local-diary-v1.0.0.zip",
+      "path": "local-diary-v1.0.0/local-diary-v1.0.0.zip",
+      "size": 16052,
+      "sha256": "e8875a9a36ca2e260f229cd6e7fd4ec4eb9dc025c2606da9efb4d7dcd7628e99",
+      "commit": "d82907e3b92e92ae8f22db41229d3ae994008be8",
+      "publishedAt": "2026-11-15T08:59:36.053Z"
+    },
+    {
       "id": "love-mode",
       "name": "快来跟我恋爱吧",
       "version": "1.5.0",
@@ -1851,5 +1881,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T08:27:07.556Z"
+  "generatedAt": "2026-11-15T08:59:36.053Z"
 }
