@@ -354,6 +354,38 @@
       "publishedAt": "2026-11-13T13:00:10.141Z"
     },
     {
+      "id": "companion-bond",
+      "name": "相伴养成",
+      "version": "1.0.0",
+      "description": "和正在聊天的她一起成长：聊天、投喂、玩耍积累亲密度，状态融入原本的人格回复。",
+      "category": "social",
+      "tags": [
+        "养成",
+        "陪伴",
+        "亲密度",
+        "互动"
+      ],
+      "platforms": [
+        "qq"
+      ],
+      "author": "J2hbk5tczj",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.1",
+      "requires": [],
+      "capabilities": [
+        "filesystem"
+      ],
+      "replacesBuiltin": false,
+      "tag": "companion-bond-v1.0.0",
+      "file": "companion-bond-v1.0.0.zip",
+      "path": "companion-bond-v1.0.0/companion-bond-v1.0.0.zip",
+      "size": 14324,
+      "sha256": "b0b1dd3fc68719de4aa95527e24176bc4499ca21a52384bc5be87a94b1bfc4c9",
+      "commit": "0371e8addb660901f88869f694068c64b5032c99",
+      "publishedAt": "2026-11-15T12:06:32.962Z"
+    },
+    {
       "id": "daily-art",
       "name": "每日推图 · 逛图站",
       "version": "3.2.0",
@@ -1910,5 +1942,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T12:06:06.976Z"
+  "generatedAt": "2026-11-15T12:06:32.962Z"
 }
