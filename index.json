@@ -1429,6 +1429,39 @@
       "publishedAt": "2026-11-10T15:27:35.433Z"
     },
     {
+      "id": "real-life",
+      "name": "生理模块",
+      "version": "1.1.0",
+      "description": "让你的bot拥有真人一般的作息和生理状态！目前支持：一日三餐饥饿与讨食、喝水与上厕所暂离、晚间洗澡吹头发、困倦入睡与做梦概率唤醒、28天生理周期（痛经怕冷与投喂哄人互动），以及日常自主/被动听令双模式。",
+      "category": "social",
+      "tags": [
+        "作息",
+        "生理周期",
+        "养成",
+        "饥饿投喂",
+        "睡眠做梦"
+      ],
+      "author": "WhiteBr1ck",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.0",
+      "requires": [],
+      "capabilities": [
+        "filesystem",
+        "plugin-config",
+        "plugin-internals"
+      ],
+      "replacesBuiltin": false,
+      "homepage": "https://github.com/WhiteBr1ck/aurabot-mod-real-life",
+      "tag": "real-life-v1.1.0",
+      "file": "real-life-v1.1.0.zip",
+      "path": "real-life-v1.1.0/real-life-v1.1.0.zip",
+      "size": 58679,
+      "sha256": "43e7d6884b83a77accc980005fb4f8f91a7881b99e138e9239b5ea6ecfa3f5e6",
+      "commit": "d13e644df7e052f8c43d77116a812a2b3dd3b79e",
+      "publishedAt": "2026-11-15T21:13:08.399Z"
+    },
+    {
       "id": "roast-mode",
       "name": "毒舌模式",
       "version": "1.0.4",
@@ -1978,5 +2011,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T18:38:10.803Z"
+  "generatedAt": "2026-11-15T21:13:08.399Z"
 }
