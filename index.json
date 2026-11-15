@@ -387,7 +387,7 @@
     {
       "id": "douyin",
       "name": "刷抖音",
-      "version": "2.3.5",
+      "version": "2.3.6",
       "description": "用专用浏览器刷抖音：看推荐、点赞评论，把好玩的视频分享给主人，也能看别人发来的抖音链接。",
       "category": "platform",
       "tags": [
@@ -408,13 +408,13 @@
       ],
       "replacesBuiltin": false,
       "homepage": "https://github.com/accomplish07zrh-eng/dsh-aurabot-qq",
-      "tag": "douyin-v2.3.5",
-      "file": "douyin-v2.3.5.zip",
-      "path": "douyin-v2.3.5/douyin-v2.3.5.zip",
-      "size": 49522,
-      "sha256": "8a18bfd81370ca7b173bffa762e7a9c0632ca48c9677b9eb7cc7cce575f3534d",
-      "commit": "1592a45be37ae5ec3aa197533fb42d3800716e72",
-      "publishedAt": "2026-11-11T10:10:02.938Z"
+      "tag": "douyin-v2.3.6",
+      "file": "douyin-v2.3.6.zip",
+      "path": "douyin-v2.3.6/douyin-v2.3.6.zip",
+      "size": 49677,
+      "sha256": "1c4c77bdc946f8ed617c973c5329014882f7946133f2477636705f7be79da167",
+      "commit": "7d2bec5df13436a69a6d477a4c206dfa6330cf4c",
+      "publishedAt": "2026-11-15T07:14:38.299Z"
     },
     {
       "id": "dsh-image",
@@ -1851,5 +1851,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T07:12:34.210Z"
+  "generatedAt": "2026-11-15T07:14:38.299Z"
 }
