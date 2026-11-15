@@ -606,7 +606,7 @@
     {
       "id": "history-vault",
       "name": "跨会话记忆",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "description": "三层存储跨 DSH 会话保留聊天细节：原文层 / 日摘要层 / 月印象层，按 skills 方式分层读取，避免会话归档后细节丢失和重复压缩上下文",
       "category": "manage",
       "tags": [
@@ -623,13 +623,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "history-vault-v0.1.3",
-      "file": "history-vault-v0.1.3.zip",
-      "path": "history-vault-v0.1.3/history-vault-v0.1.3.zip",
-      "size": 23451,
-      "sha256": "c31d794932a8d5f1f0cd3fe9fec88ec4705c4f0787e2012e707da3ea57b90bf5",
-      "commit": "9ff2ccbc8c19884891c350d844ccdb870ac4dfa6",
-      "publishedAt": "2026-11-06T17:20:05.895Z"
+      "tag": "history-vault-v0.1.4",
+      "file": "history-vault-v0.1.4.zip",
+      "path": "history-vault-v0.1.4/history-vault-v0.1.4.zip",
+      "size": 23964,
+      "sha256": "074508ad917af94a3c0d1ed8cd3d0eca507ca913c56b67d43651db7869032f72",
+      "commit": "8311663069bd27cfdadd5a4db9af51c672fc618b",
+      "publishedAt": "2026-11-15T07:12:34.210Z"
     },
     {
       "id": "hongguo",
@@ -1851,5 +1851,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T05:50:58.933Z"
+  "generatedAt": "2026-11-15T07:12:34.210Z"
 }
