@@ -1205,7 +1205,7 @@
     {
       "id": "pocket",
       "name": "口袋aurabot",
-      "version": "1.5.5",
+      "version": "1.5.9",
       "description": "【手机 App】把她接进口袋：安卓 app 里直接聊天（发图、语音条、表情包双向），消息走她原生对话流，记忆/心情/其他模组全在，回复与主动搭话实时推到手机；自带局域网服务，家里 WiFi、公网 IPv6、隧道三种连法，记忆与 QQ 端共用同一套。",
       "category": "platform",
       "tags": [
@@ -1228,13 +1228,13 @@
         "process"
       ],
       "replacesBuiltin": false,
-      "tag": "pocket-v1.5.5",
-      "file": "pocket-v1.5.5.zip",
-      "path": "pocket-v1.5.5/pocket-v1.5.5.zip",
-      "size": 314470,
-      "sha256": "4cc3aadd2e3830e91448862397bbd7201ccd1f2042c9a30b901475fc3e92e894",
-      "commit": "aa178b9f4d08a79583483afacb5f9bb42e7b47b0",
-      "publishedAt": "2026-11-14T19:17:12.007Z"
+      "tag": "pocket-v1.5.9",
+      "file": "pocket-v1.5.9.zip",
+      "path": "pocket-v1.5.9/pocket-v1.5.9.zip",
+      "size": 319914,
+      "sha256": "8e563c52b8ca2c3394a67d1022d0a03f605ef091e1e48af26e96ec3f22c705d9",
+      "commit": "c93d63a80926d22ce3126e00d32cb7f9eeefa5f0",
+      "publishedAt": "2026-11-15T04:17:16.084Z"
     },
     {
       "id": "price-watch",
@@ -1851,5 +1851,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T00:08:27.081Z"
+  "generatedAt": "2026-11-15T04:17:16.084Z"
 }
