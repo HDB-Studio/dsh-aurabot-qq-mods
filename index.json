@@ -572,6 +572,35 @@
       "publishedAt": "2026-11-06T06:03:15.318Z"
     },
     {
+      "id": "group-topic-boundary",
+      "name": "群聊话题边界",
+      "version": "1.0.0",
+      "description": "群聊不深入敏感政治话题；明显内容发送前转开话题。普通私聊不变，无额外模型调用。",
+      "category": "manage",
+      "tags": [
+        "群聊",
+        "话题",
+        "政治"
+      ],
+      "platforms": [
+        "qq"
+      ],
+      "author": "b1ghawk119",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.1",
+      "requires": [],
+      "capabilities": [],
+      "replacesBuiltin": false,
+      "tag": "group-topic-boundary-v1.0.0",
+      "file": "group-topic-boundary-v1.0.0.zip",
+      "path": "group-topic-boundary-v1.0.0/group-topic-boundary-v1.0.0.zip",
+      "size": 4612,
+      "sha256": "739a4fac9f329a4a48d1b9d8928d114f34d870d520e9a24faed578fabea49f5e",
+      "commit": "93fa59827efe5681312f85a2d5a38ff49574ae05",
+      "publishedAt": "2026-11-15T10:33:09.220Z"
+    },
+    {
       "id": "heybox",
       "name": "刷小黑盒",
       "version": "1.6.2",
@@ -1881,5 +1910,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T08:59:36.053Z"
+  "generatedAt": "2026-11-15T10:33:09.220Z"
 }
