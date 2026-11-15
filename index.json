@@ -1425,7 +1425,7 @@
     {
       "id": "room3d",
       "name": "房间",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "description": "给她一个自己的 3D 房间：屋里一开始是空的，只有她一个人（大肥鱼）；家具、地板、猫都能自己摆，她还看得见自己在哪儿。",
       "category": "social",
       "tags": [
@@ -1446,13 +1446,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "room3d-v1.0.3",
-      "file": "room3d-v1.0.3.zip",
-      "path": "room3d-v1.0.3/room3d-v1.0.3.zip",
-      "size": 331095,
-      "sha256": "7af591b654b196d7c1e82fdabe8a1cb191e37422f816f73314d7c79e4128484f",
-      "commit": "b3c2dfa2302217a35fdf2b98bc9eecc9e80bb019",
-      "publishedAt": "2026-11-10T14:34:02.261Z"
+      "tag": "room3d-v1.0.4",
+      "file": "room3d-v1.0.4.zip",
+      "path": "room3d-v1.0.4/room3d-v1.0.4.zip",
+      "size": 333921,
+      "sha256": "365287ddb01ad895eb8f7235822161a1a77b439f5eeb6be53e493736ffeb53c1",
+      "commit": "ddd3d44abe96c89c8534405b4c42c482c76fd98f",
+      "publishedAt": "2026-11-15T17:35:03.904Z"
     },
     {
       "id": "rss-reader",
@@ -1942,5 +1942,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T17:02:54.057Z"
+  "generatedAt": "2026-11-15T17:35:03.904Z"
 }
