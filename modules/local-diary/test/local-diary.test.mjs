@@ -10,7 +10,15 @@ import { join } from 'node:path'
 
 import mod from '../index.mjs'
 
-const DAY = '2026-11-15'
+const pad = (n) => String(n).padStart(2, '0')
+/** 用运行时的今天：以前写死 2026-11-15，跨过零点后模块按当天写、测试按旧日期找，CI 必红。 */
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const at = (hours, minutes) => {
+  const d = new Date()
+  d.setHours(hours, minutes, 0, 0)
+  return d.getTime()
+}
+const DAY = dayKey()
 const BODY = '今天在公园看锦鲤，红的一片挤过来。'
 
 /** 建一个临时根目录，用例结束自动删。 */
@@ -49,9 +57,9 @@ function fakeApi(root, { think, preset } = {}) {
     core: {
       hub: {
         chatLogOf: () => [
-          { t: Date.parse('2026-11-15T09:12:00'), chatId: 'private:1', who: 'user', text: '早' },
-          { t: Date.parse('2026-11-15T09:13:00'), chatId: 'private:1', who: 'bot', text: '早呀' },
-          { t: Date.parse('2026-11-15T12:00:00'), chatId: 'group:888', who: 'user', text: '在吗' },
+          { t: at(9, 12), chatId: 'private:1', who: 'user', text: '早' },
+          { t: at(9, 13), chatId: 'private:1', who: 'bot', text: '早呀' },
+          { t: at(12, 0), chatId: 'group:888', who: 'user', text: '在吗' },
         ],
       },
       http: {
@@ -84,7 +92,7 @@ test('第一次写落一份 md，同一天再写往后编号，旧的不覆盖',
   assert.equal(existsSync(day1), true)
 
   const text = readFileSync(day1, 'utf8')
-  assert.match(text, /^---\ndate: 2026-11-15\n/)
+  assert.match(text, new RegExp(`^---\\ndate: ${DAY}\\n`))
   assert.match(text, /mood: "心情不错"/)
   assert.match(text, /chats: 3/)
   assert.ok(text.includes(BODY), '正文应该原样落进文件')
