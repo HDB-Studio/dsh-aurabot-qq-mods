@@ -855,7 +855,7 @@
     {
       "id": "local-diary",
       "name": "私人日记",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "每天写一篇 md 私人日记到本地文件夹，写给她自己看；随插件备份一起搬家",
       "category": "tool",
       "tags": [
@@ -874,13 +874,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "local-diary-v1.0.0",
-      "file": "local-diary-v1.0.0.zip",
-      "path": "local-diary-v1.0.0/local-diary-v1.0.0.zip",
-      "size": 16052,
-      "sha256": "e8875a9a36ca2e260f229cd6e7fd4ec4eb9dc025c2606da9efb4d7dcd7628e99",
-      "commit": "d82907e3b92e92ae8f22db41229d3ae994008be8",
-      "publishedAt": "2026-11-15T08:59:36.053Z"
+      "tag": "local-diary-v1.0.1",
+      "file": "local-diary-v1.0.1.zip",
+      "path": "local-diary-v1.0.1/local-diary-v1.0.1.zip",
+      "size": 16054,
+      "sha256": "5d6d5f973541a21d1c5a2e4294c422302f0b3b5bd34d4965c704e586929ce488",
+      "commit": "c1d86f25d48cc2904bb41ddc3e72ca7b0c722313",
+      "publishedAt": "2026-11-15T16:23:20.546Z"
     },
     {
       "id": "love-mode",
@@ -1942,5 +1942,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T12:06:32.962Z"
+  "generatedAt": "2026-11-15T16:23:20.546Z"
 }
