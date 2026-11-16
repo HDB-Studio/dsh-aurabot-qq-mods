@@ -1915,14 +1915,15 @@
     {
       "id": "wardrobe",
       "name": "衣柜",
-      "version": "1.0.1",
-      "description": "她的衣服：每套带参考图和文字描述，挑一套当前穿搭，按固定姿势生成预览；不能带参考图的服务直接用描述",
+      "version": "1.2.0",
+      "description": "她的衣服：每套带参考图和文字描述；场景标签可自动/一键标注，跟作息自动换装，手动挑选优先",
       "category": "creative",
       "tags": [
         "衣柜",
         "穿搭",
         "生图",
-        "人设"
+        "人设",
+        "作息"
       ],
       "author": "YanOnjun",
       "license": "MIT",
@@ -1939,13 +1940,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "wardrobe-v1.0.1",
-      "file": "wardrobe-v1.0.1.zip",
-      "path": "wardrobe-v1.0.1/wardrobe-v1.0.1.zip",
-      "size": 15696,
-      "sha256": "009fc5afb757cb2edceaafd69a645b3a6c0b57149b006c2fb575e54cd4b4e901",
-      "commit": "9967e9c15a9f69731476492397e45c531851414c",
-      "publishedAt": "2026-11-13T11:25:59.755Z"
+      "tag": "wardrobe-v1.2.0",
+      "file": "wardrobe-v1.2.0.zip",
+      "path": "wardrobe-v1.2.0/wardrobe-v1.2.0.zip",
+      "size": 22110,
+      "sha256": "8d24942e26e629bf3da1bef3c159191924a39dbab66ddd878fa7a7d904ab7ea4",
+      "commit": "6fa3a547bfb3bcd610e1bfb2221443dc93f4c511",
+      "publishedAt": "2026-11-16T11:22:21.076Z"
     },
     {
       "id": "windows-ops",
@@ -2080,5 +2081,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T11:21:54.183Z"
+  "generatedAt": "2026-11-16T11:22:21.076Z"
 }
