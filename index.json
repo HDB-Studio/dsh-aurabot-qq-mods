@@ -917,7 +917,7 @@
     {
       "id": "mc-rcon",
       "name": "我的世界服务器分身",
-      "version": "1.5.2",
+      "version": "1.5.3",
       "description": "通过 RCON 住进 Minecraft 服务器：游戏里像群聊一样接话、死亡播报、跨维度 tp、换端自动检测；管理员和普通玩家按权限执行服务器操作。",
       "category": "social",
       "tags": [
@@ -942,13 +942,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "mc-rcon-v1.5.2",
-      "file": "mc-rcon-v1.5.2.zip",
-      "path": "mc-rcon-v1.5.2/mc-rcon-v1.5.2.zip",
-      "size": 42136,
-      "sha256": "b24a479dd0113425d462819eae732c159d2e0fc6c12953659e333781c1ad7dd5",
-      "commit": "71154045944a1662e537ab7efae62aac88d15855",
-      "publishedAt": "2026-11-15T18:38:10.803Z"
+      "tag": "mc-rcon-v1.5.3",
+      "file": "mc-rcon-v1.5.3.zip",
+      "path": "mc-rcon-v1.5.3/mc-rcon-v1.5.3.zip",
+      "size": 43237,
+      "sha256": "316f74ed6cb93588983ca99b5a74771b651fd8e98376c18b803029519f9f6427",
+      "commit": "3d1d843b19d017fafd2c5705a808ef455b88d47f",
+      "publishedAt": "2026-11-16T07:03:56.726Z"
     },
     {
       "id": "meme",
@@ -2011,5 +2011,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T01:52:01.821Z"
+  "generatedAt": "2026-11-16T07:03:56.726Z"
 }
