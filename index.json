@@ -1915,7 +1915,7 @@
     {
       "id": "wardrobe",
       "name": "衣柜",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "description": "她的衣服：每套带参考图和文字描述；场景标签可自动/一键标注，跟作息自动换装，手动挑选优先",
       "category": "creative",
       "tags": [
@@ -1940,13 +1940,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "wardrobe-v1.2.0",
-      "file": "wardrobe-v1.2.0.zip",
-      "path": "wardrobe-v1.2.0/wardrobe-v1.2.0.zip",
-      "size": 22110,
-      "sha256": "8d24942e26e629bf3da1bef3c159191924a39dbab66ddd878fa7a7d904ab7ea4",
-      "commit": "6fa3a547bfb3bcd610e1bfb2221443dc93f4c511",
-      "publishedAt": "2026-11-16T11:22:21.076Z"
+      "tag": "wardrobe-v1.2.1",
+      "file": "wardrobe-v1.2.1.zip",
+      "path": "wardrobe-v1.2.1/wardrobe-v1.2.1.zip",
+      "size": 22744,
+      "sha256": "e9ced27852c3dce710617adf6683b230e29400760b5e4430694603b1e6682062",
+      "commit": "bb84ba291aecb144abf5e7f4ea41cd4b35787d65",
+      "publishedAt": "2026-11-16T14:57:29.316Z"
     },
     {
       "id": "windows-ops",
@@ -2081,5 +2081,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T11:22:21.076Z"
+  "generatedAt": "2026-11-16T14:57:29.316Z"
 }
