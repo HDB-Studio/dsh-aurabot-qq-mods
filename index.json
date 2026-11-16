@@ -324,6 +324,44 @@
       "publishedAt": "2026-11-11T10:10:02.938Z"
     },
     {
+      "id": "cabinworld",
+      "name": "小屋世界",
+      "version": "0.4.2",
+      "description": "给大肥鱼一个会走路的身体：Cabin World 像素小世界，去公园、荡秋千、钓鱼、买零食、在餐厅点菜、回家睡觉、去电玩城玩一局，动作由游戏判定并记进记忆。模块本体只有代码、不含游戏，装好后点「一键安装」从上游 Release 下载。",
+      "category": "tool",
+      "tags": [
+        "小屋世界",
+        "cabin-world",
+        "游戏",
+        "身体",
+        "记忆"
+      ],
+      "platforms": [
+        "qq"
+      ],
+      "author": "大肥鱼",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.2.0",
+      "requires": [],
+      "capabilities": [
+        "network",
+        "filesystem",
+        "process",
+        "plugin-internals",
+        "plugin-config"
+      ],
+      "replacesBuiltin": false,
+      "homepage": "https://github.com/BabyBus2022/cabin-world",
+      "tag": "cabinworld-v0.4.2",
+      "file": "cabinworld-v0.4.2.zip",
+      "path": "cabinworld-v0.4.2/cabinworld-v0.4.2.zip",
+      "size": 95231,
+      "sha256": "02e94c52c54d02a4f80713839d31742809b938af6fe09df707c8a73ef7ba9544",
+      "commit": "7954c1d9ac8c51e326acde623076b1bc88358e69",
+      "publishedAt": "2026-11-16T09:12:50.312Z"
+    },
+    {
       "id": "callme",
       "name": "语音通话",
       "version": "1.0.1",
@@ -2011,5 +2049,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T08:41:23.349Z"
+  "generatedAt": "2026-11-16T09:12:50.312Z"
 }
