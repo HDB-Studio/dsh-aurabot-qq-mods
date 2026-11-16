@@ -824,7 +824,7 @@
     {
       "id": "livin",
       "name": "过日子",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "description": "她自己的一整天：无聊了从乐子清单自己挑一件事——刷抖音、玩游戏、逛B站、写小说、发呆都行，做完看心情分享，下次什么时候醒也她自己定。不是任务清单，是生活。",
       "category": "desktop",
       "tags": [
@@ -844,13 +844,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "livin-v1.2.1",
-      "file": "livin-v1.2.1.zip",
-      "path": "livin-v1.2.1/livin-v1.2.1.zip",
-      "size": 18436,
-      "sha256": "c77a1d3447a1cab299901c94e1687675a187cc69249a28b8baa4a8f62e2f94f6",
-      "commit": "fe91750acbd01a246d60b0ca70d9cd074d1e5e1b",
-      "publishedAt": "2026-11-14T18:44:29.036Z"
+      "tag": "livin-v1.2.2",
+      "file": "livin-v1.2.2.zip",
+      "path": "livin-v1.2.2/livin-v1.2.2.zip",
+      "size": 19102,
+      "sha256": "734b666c64320adcf6af4033418354b81c15c91ce3c608680e1b00bbca65c079",
+      "commit": "516888235eda486dd56ced6e3e71f78b378435a8",
+      "publishedAt": "2026-11-16T01:52:01.821Z"
     },
     {
       "id": "local-diary",
@@ -2011,5 +2011,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-15T21:13:08.399Z"
+  "generatedAt": "2026-11-16T01:52:01.821Z"
 }
