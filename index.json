@@ -394,8 +394,8 @@
     {
       "id": "companion-bond",
       "name": "相伴养成",
-      "version": "1.0.0",
-      "description": "和正在聊天的她一起成长：聊天、投喂、玩耍积累亲密度，状态融入原本的人格回复。",
+      "version": "1.0.1",
+      "description": "聊天、投喂和玩耍积累亲密度，三档桌面立绘带待机、眨眼与视线跟随（Apple Silicon Mac）。",
       "category": "social",
       "tags": [
         "养成",
@@ -412,16 +412,17 @@
       "minPluginVersion": "1.2.1",
       "requires": [],
       "capabilities": [
-        "filesystem"
+        "filesystem",
+        "process"
       ],
       "replacesBuiltin": false,
-      "tag": "companion-bond-v1.0.0",
-      "file": "companion-bond-v1.0.0.zip",
-      "path": "companion-bond-v1.0.0/companion-bond-v1.0.0.zip",
-      "size": 14324,
-      "sha256": "b0b1dd3fc68719de4aa95527e24176bc4499ca21a52384bc5be87a94b1bfc4c9",
-      "commit": "0371e8addb660901f88869f694068c64b5032c99",
-      "publishedAt": "2026-11-15T12:06:32.962Z"
+      "tag": "companion-bond-v1.0.1",
+      "file": "companion-bond-v1.0.1.zip",
+      "path": "companion-bond-v1.0.1/companion-bond-v1.0.1.zip",
+      "size": 8987920,
+      "sha256": "fe11eb77739de0fb03b0e742e57afba8f303564be50ea266de7c461f1fd0f57c",
+      "commit": "45ea4f33a08350082c490cbc78cd1fb3fb0d4417",
+      "publishedAt": "2026-11-16T15:45:11.363Z"
     },
     {
       "id": "daily-art",
@@ -2111,5 +2112,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T14:58:01.230Z"
+  "generatedAt": "2026-11-16T15:45:11.363Z"
 }
