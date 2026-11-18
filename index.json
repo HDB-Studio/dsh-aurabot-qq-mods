@@ -764,7 +764,7 @@
     {
       "id": "hongguo",
       "name": "刷红果短剧",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "用专用浏览器刷红果短剧：看推荐、记下看过的，刷到好看的用 QQ 私聊告诉主人。看完会把标题、简介、播放时抓的画面帧和真实热评一起交给模型判断好不好看，只有真的觉得值得才分享。",
       "category": "platform",
       "tags": [
@@ -785,13 +785,13 @@
       ],
       "replacesBuiltin": false,
       "homepage": "https://github.com/aureth-labs/dsh-aurabot-qq",
-      "tag": "hongguo-v0.1.0",
-      "file": "hongguo-v0.1.0.zip",
-      "path": "hongguo-v0.1.0/hongguo-v0.1.0.zip",
-      "size": 39467,
-      "sha256": "8dcca984e5ec07f97aa3c308692fca5cf05eeae0dc37041c0002740c263f7f05",
-      "commit": "e5e3a627b1278d64bd6556976a9e57f4cf102ecf",
-      "publishedAt": "2026-11-13T08:17:54.192Z"
+      "tag": "hongguo-v0.1.1",
+      "file": "hongguo-v0.1.1.zip",
+      "path": "hongguo-v0.1.1/hongguo-v0.1.1.zip",
+      "size": 41406,
+      "sha256": "41654a01856d014f087b8702a7e085b2985c8e051466f9ddaa77a02cfc3674c6",
+      "commit": "ba125ef1d80656b63ff75a1b80f39b493b870743",
+      "publishedAt": "2026-11-18T08:26:17.069Z"
     },
     {
       "id": "impression-card",
@@ -2142,5 +2142,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-18T08:25:11.709Z"
+  "generatedAt": "2026-11-18T08:26:17.069Z"
 }
