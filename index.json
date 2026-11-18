@@ -232,7 +232,7 @@
     {
       "id": "billiards",
       "name": "台球",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "桌宠那台台球桌搬出来了：拖白球出杆打八球，整个桌面当球桌，球桌以外照常点东西。",
       "category": "desktop",
       "tags": [
@@ -251,13 +251,13 @@
         "process"
       ],
       "replacesBuiltin": false,
-      "tag": "billiards-v1.0.0",
-      "file": "billiards-v1.0.0.zip",
-      "path": "billiards-v1.0.0/billiards-v1.0.0.zip",
-      "size": 36403,
-      "sha256": "4a2251d70ff7a4cd2b7079abe8028205e7936c6255c62f1cbfa70ea854ee04c1",
-      "commit": "0b4a8fff74513177fa020b5833822e3998f50120",
-      "publishedAt": "2026-11-12T10:31:09.518Z"
+      "tag": "billiards-v1.0.1",
+      "file": "billiards-v1.0.1.zip",
+      "path": "billiards-v1.0.1/billiards-v1.0.1.zip",
+      "size": 36406,
+      "sha256": "857ec8137fb39bceebd82dd4ea44640b817432d41151ced71192743caf31a4ad",
+      "commit": "a908d40daa83cbda0c1dea727cc99f42956baef4",
+      "publishedAt": "2026-11-18T06:27:15.537Z"
     },
     {
       "id": "breeze",
@@ -1083,7 +1083,7 @@
     {
       "id": "mijia",
       "name": "逛米家（米家智控）",
-      "version": "1.1.3",
+      "version": "1.1.4",
       "description": "米家设备列表与开/关控制：扫码登录免账号密码，私聊说「开客厅灯」或用 /米家 命令，也能让她自己调工具",
       "category": "platform",
       "tags": [
@@ -1102,13 +1102,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "mijia-v1.1.3",
-      "file": "mijia-v1.1.3.zip",
-      "path": "mijia-v1.1.3/mijia-v1.1.3.zip",
+      "tag": "mijia-v1.1.4",
+      "file": "mijia-v1.1.4.zip",
+      "path": "mijia-v1.1.4/mijia-v1.1.4.zip",
       "size": 35938,
-      "sha256": "c659bc7bf8dae0a8e1ab660693a8746c8fed1de0d55a4cd1e7afade691bd53df",
-      "commit": "55508d977ac6ddc0269aad78045f320d772c68b5",
-      "publishedAt": "2026-11-08T02:19:28.134Z"
+      "sha256": "36d6431c0faa88ad90806b02ca5cf49fbac8af3f6abb30cf574e29eb0012eaae",
+      "commit": "a908d40daa83cbda0c1dea727cc99f42956baef4",
+      "publishedAt": "2026-11-18T06:27:15.537Z"
     },
     {
       "id": "mimo-modelscope",
@@ -1337,7 +1337,7 @@
     {
       "id": "pet",
       "name": "桌宠",
-      "version": "1.0.18",
+      "version": "1.0.19",
       "description": "把大肥鱼请到桌面上：会冒气泡、做小动作，你在干活时也陪着你。",
       "category": "desktop",
       "tags": [
@@ -1358,13 +1358,13 @@
       ],
       "replacesBuiltin": false,
       "homepage": "https://github.com/accomplish07zrh-eng/dsh-aurabot-qq",
-      "tag": "pet-v1.0.18",
-      "file": "pet-v1.0.18.zip",
-      "path": "pet-v1.0.18/pet-v1.0.18.zip",
+      "tag": "pet-v1.0.19",
+      "file": "pet-v1.0.19.zip",
+      "path": "pet-v1.0.19/pet-v1.0.19.zip",
       "size": 224858,
-      "sha256": "1cf1eddb57a8ffe5a62837ca46e775df5111325b0195c456953c026b7451b3ba",
-      "commit": "d2f0bc398f0b6f8fb47e70858f2914cf1d8ce8c8",
-      "publishedAt": "2026-11-10T06:19:33.729Z"
+      "sha256": "0187ba42a4c2f598d6c41d45b8eebecae789f04d0ccfe6ce685941ae1f3fd44c",
+      "commit": "a908d40daa83cbda0c1dea727cc99f42956baef4",
+      "publishedAt": "2026-11-18T06:27:15.537Z"
     },
     {
       "id": "phone",
@@ -1786,7 +1786,7 @@
     {
       "id": "tieba-reader",
       "name": "逛贴吧（只读）",
-      "version": "1.5.4",
+      "version": "1.5.5",
       "description": "只读搜索和浏览贴吧，也可按兴趣向主人私聊分享。",
       "category": "platform",
       "tags": [
@@ -1807,13 +1807,13 @@
         "plugin-internals"
       ],
       "replacesBuiltin": false,
-      "tag": "tieba-reader-v1.5.4",
-      "file": "tieba-reader-v1.5.4.zip",
-      "path": "tieba-reader-v1.5.4/tieba-reader-v1.5.4.zip",
-      "size": 128015,
-      "sha256": "8d14d2e5de8d856d3f43a46043e61ce4526c56883ec7ca68aef7268d46852bbf",
-      "commit": "f36a8ce56f0abf436e00803e2abbb8decc0cf9c9",
-      "publishedAt": "2026-11-15T17:35:37.510Z"
+      "tag": "tieba-reader-v1.5.5",
+      "file": "tieba-reader-v1.5.5.zip",
+      "path": "tieba-reader-v1.5.5/tieba-reader-v1.5.5.zip",
+      "size": 128014,
+      "sha256": "0912d863a31ee079fabd774f8d8c96822d9b448aa37f4d1d5c6c06f7719300d9",
+      "commit": "a908d40daa83cbda0c1dea727cc99f42956baef4",
+      "publishedAt": "2026-11-18T06:27:15.537Z"
     },
     {
       "id": "token-budget",
@@ -2112,5 +2112,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-16T15:45:11.363Z"
+  "generatedAt": "2026-11-18T06:27:15.537Z"
 }
