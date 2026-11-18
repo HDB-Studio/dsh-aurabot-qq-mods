@@ -1335,6 +1335,36 @@
       "publishedAt": "2026-11-10T05:16:07.274Z"
     },
     {
+      "id": "persona-memory",
+      "name": "人设记忆预览",
+      "version": "0.1.0",
+      "description": "查看当前人格与主人的私聊原生记忆及确认送达统计。需支持记忆预览的 Aurabot。问题反馈 QQ 1365641547。",
+      "category": "manage",
+      "tags": [
+        "记忆",
+        "人设",
+        "只读预览"
+      ],
+      "author": "Yobak",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.3.0",
+      "requires": [],
+      "capabilities": [
+        "filesystem",
+        "plugin-config",
+        "plugin-internals"
+      ],
+      "replacesBuiltin": false,
+      "tag": "persona-memory-v0.1.0",
+      "file": "persona-memory-v0.1.0.zip",
+      "path": "persona-memory-v0.1.0/persona-memory-v0.1.0.zip",
+      "size": 6022,
+      "sha256": "ab3f8bba0eb617ef9b23a96e680278f27e00022bf3f44786349e30148cf5f25c",
+      "commit": "0e5f7bb5cddcf93ae8877770c0cc7651392c1eba",
+      "publishedAt": "2026-11-18T06:50:09.872Z"
+    },
+    {
       "id": "pet",
       "name": "桌宠",
       "version": "1.0.19",
@@ -2112,5 +2142,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-18T06:27:15.537Z"
+  "generatedAt": "2026-11-18T06:50:09.872Z"
 }
