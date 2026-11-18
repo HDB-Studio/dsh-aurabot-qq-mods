@@ -1365,6 +1365,37 @@
       "publishedAt": "2026-11-18T06:50:09.872Z"
     },
     {
+      "id": "persona-runtime",
+      "name": "人格运行时",
+      "version": "1.0.0",
+      "description": "每轮回复层的人格：自我指向 / 情感倾向 / 语气 / 情绪残余。九开关分段可关，全关等于「安静日的她」。与自驱引擎协同（观察桥/点火/duty 申报），非必需依赖：引擎没开时独立降级运行。",
+      "category": "social",
+      "tags": [
+        "人格",
+        "情绪",
+        "注入",
+        "自驱协同"
+      ],
+      "author": "RookieApe-tao",
+      "license": "MIT",
+      "api": 1,
+      "minPluginVersion": "1.3.0",
+      "requires": [],
+      "capabilities": [
+        "plugin-internals",
+        "filesystem",
+        "plugin-config"
+      ],
+      "replacesBuiltin": false,
+      "tag": "persona-runtime-v1.0.0",
+      "file": "persona-runtime-v1.0.0.zip",
+      "path": "persona-runtime-v1.0.0/persona-runtime-v1.0.0.zip",
+      "size": 65312,
+      "sha256": "719d8a2872fbd2f9e060b13e71cbd05dd66d44c2db6c759b1663b0f523ad4c86",
+      "commit": "4927d9dbcc4c932a32b99b402cef737382f9717f",
+      "publishedAt": "2026-11-18T11:32:08.823Z"
+    },
+    {
       "id": "pet",
       "name": "桌宠",
       "version": "1.0.19",
@@ -2142,5 +2173,5 @@
     }
   ],
   "revoked": [],
-  "generatedAt": "2026-11-18T08:26:17.069Z"
+  "generatedAt": "2026-11-18T11:32:08.823Z"
 }
