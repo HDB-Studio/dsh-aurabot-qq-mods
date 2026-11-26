@@ -287,7 +287,7 @@ async function windowsSend(printer, bytes, timeoutMs, { dataDir, spawnImpl, plat
   if (!dataDir) return { ok: false, error: '缺少模块数据目录' }
   const scriptPath = join(dataDir, 'raw-print.ps1')
   const filePath = join(dataDir, `job-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.bin`)
-  await writeFile(scriptPath, WINDOWS_SCRIPT, 'utf8')
+  await writeFile(scriptPath, '\uFEFF' + WINDOWS_SCRIPT, 'utf8')
   await writeFile(filePath, bytes)
   try {
     const args = windowsArgs(scriptPath, printer.target, filePath)

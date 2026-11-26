@@ -126,6 +126,9 @@ test('Windows：调用 PowerShell 并清理临时文件', async () => {
   assert.ok(files.includes('raw-print.ps1'))
   assert.ok(!files.some((f) => f.startsWith('job-')), '临时 job 文件应该被删掉')
   assert.ok((await readFile(join(dir, 'raw-print.ps1'), 'utf8')).includes('WritePrinter'))
+  const script = await readFile(join(dir, 'raw-print.ps1'))
+  assert.equal(script.subarray(0, 3).toString('hex'), 'efbbbf', 'PowerShell 5.1 需要 UTF-8 BOM 才能正确解析中文')
+  assert.ok(script.toString('utf8').includes('写打印机失败'))
 })
 
 test('Windows：非 Windows 平台直接拒绝', async () => {
