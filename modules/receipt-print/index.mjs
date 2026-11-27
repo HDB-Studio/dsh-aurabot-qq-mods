@@ -8,17 +8,18 @@ import { decodeEscpos, decodeStatusBytes, searchCommands } from './lib/escpos-de
 import { buildLines, buildPrompt, cleanModelText, previewText, formatDate, PLACEHOLDER_DOCS } from './lib/templates.mjs'
 import { buildSelfTestPage } from './lib/selftest.mjs'
 import { collectDetails } from './lib/sysinfo.mjs'
+import { resolveQr } from './lib/qr.mjs'
 import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
-import { pickNewMoments, extractImageSources, timeOf, describeMoments } from './lib/moments.mjs'
+import { pickNewMoments, extractImageSources, timeOf, describeMoments, momentUrl } from './lib/moments.mjs'
 import { messageText, messageImages, firstUrl, htmlToText, clipText } from './lib/requests.mjs'
 import { readFile } from 'node:fs/promises'
 import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.13.0'
+const VERSION = '0.14.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -53,6 +54,7 @@ const DEFAULTS = {
   backupDir: '',
   footer: '',
   qrText: '',
+  qrMode: 'auto',
   timeoutMs: 8000,
   momentAuto: true,
   momentIncludeSelf: false,
@@ -148,6 +150,7 @@ function normalizeSettings(raw = {}) {
     imageGamma: Math.max(0.5, Math.min(2.5, Number(settings.imageGamma) || DEFAULTS.imageGamma)),
     imageSharpen: settings.imageSharpen !== false,
     printRequests: ['off', 'owner', 'all'].includes(settings.printRequests) ? settings.printRequests : DEFAULTS.printRequests,
+    qrMode: ['auto', 'custom', 'off'].includes(settings.qrMode) ? settings.qrMode : DEFAULTS.qrMode,
     requestMaxChars: Math.max(100, Math.min(4000, Number(settings.requestMaxChars) || DEFAULTS.requestMaxChars)),
   }
 }
@@ -198,7 +201,8 @@ export default {
     { key: 'reportErrors', label: '出错私聊主人', type: 'switch', hint: '打印失败或打印机返回错误状态时，主动私聊主人账号' },
     { key: 'backupDir', label: '备份目录', type: 'text', placeholder: '留空 = modules-data/receipt-print/backups；可粘贴绝对路径', hint: '每次打印写一个 receipt-*.txt；目录不可写时自动退回默认目录' },
     { key: 'footer', label: '全局页脚', type: 'text', placeholder: '可留空；支持 {date} {time} {weekday} {width} 等，发 /占位符 看全表' },
-    { key: 'qrText', label: '二维码内容', type: 'text', placeholder: '留空不打印；支持 {date} {name} {columns} 等，发 /占位符 看全表' },
+    { key: 'qrMode', label: '二维码来源', type: 'select', options: [{ value: 'auto', label: '自动（有链接就指向链接）' }, { value: 'custom', label: '只用下面的内容' }, { value: 'off', label: '不打二维码' }], hint: '自动：说说指向那条说说的网址，消息里的链接指向该网页，没有链接才用下面的内容' },
+    { key: 'qrText', label: '二维码内容', type: 'text', placeholder: '文字或网址；支持 {date} {name} {columns} 等，发 /占位符 看全表' },
     { key: 'timeoutMs', label: '打印超时（毫秒）', type: 'number', min: 1000, max: 30000, step: 500 },
     { key: 'momentAuto', label: '说说自动打印', type: 'switch', hint: '她每次发空间说说后，自动排版打印成小票' },
     { key: 'momentIncludeSelf', label: '连仅自己可见的也说打印', type: 'switch', hint: '默认只打印公开发布的说说' },
@@ -324,7 +328,7 @@ export default {
           showHeader: settings.showHeader,
           fun: settings.fun,
           footer: template.footer || settings.footer,
-          qr: template.qr || settings.qrText,
+          qr: resolveQr({ mode: settings.qrMode, custom: template.qr || settings.qrText }),
           now,
         })
         const text = previewText(lines)
@@ -391,7 +395,7 @@ export default {
         effectiveMm: paper.effectiveMm,
         showHeader: false,
         footer: settings.footer,
-        qr: settings.qrText,
+        qr: resolveQr({ mode: settings.qrMode, custom: settings.qrText, url: firstUrl(body) }),
         now: new Date(),
       })
       const preview = previewText(lines)
@@ -487,7 +491,7 @@ export default {
         effectiveMm: paper.effectiveMm,
         showHeader: settings.showHeader,
         footer: settings.footer,
-        qr: settings.qrText,
+        qr: resolveQr({ mode: settings.qrMode, custom: settings.qrText, url: momentUrl(row) }),
         now,
       })
       const bytes = buildReceiptBytes(lines, {
@@ -647,7 +651,7 @@ export default {
       return images
     }
 
-    async function printPayload({ title, body, images = [], reason = '消息打印' }) {
+    async function printPayload({ title, body, images = [], reason = '消息打印', url = '' }) {
       const settings = settingsNow()
       const printer = currentPrinter(settings)
       if (!printer) return { ok: false, message: '还没配置打印机，先去面板里填一台' }
@@ -660,7 +664,7 @@ export default {
         effectiveMm: paper.effectiveMm,
         showHeader: false,
         footer: settings.footer,
-        qr: settings.qrText,
+        qr: resolveQr({ mode: settings.qrMode, custom: settings.qrText, url }),
         now: new Date(),
       })
       const bytes = buildReceiptBytes(lines, {
@@ -737,7 +741,7 @@ export default {
         return
       }
       const clipped = clipText(body, settings.requestMaxChars)
-      const result = await printPayload({ title, body: clipped.text, images, reason })
+      const result = await printPayload({ title, body: clipped.text, images, reason, url: firstUrl(text) })
       api.reply?.(msg, clipped.clipped ? `${result.message}（内容太长，已截断）` : result.message)
     }
 
@@ -1236,7 +1240,7 @@ export default {
         effectiveMm: paper.effectiveMm,
         showHeader: false,
         footer: settings.footer,
-        qr: settings.qrText,
+        qr: resolveQr({ mode: settings.qrMode, custom: settings.qrText, url: firstUrl(String(body.text || '')) }),
         now: new Date(),
       })
       return {

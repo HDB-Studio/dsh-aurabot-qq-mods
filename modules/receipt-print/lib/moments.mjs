@@ -3,6 +3,18 @@ import { existsSync } from 'node:fs'
 
 const IMAGE_KEYS = ['images', 'pics', 'photos', 'pictures', 'media', 'attachments']
 
+/** 说说自己的网址：优先宿主给的 url，其次用 uin + tid 拼 QQ 空间地址。 */
+export function momentUrl(row) {
+  const direct = String(row?.url || row?.link || row?.jumpUrl || '').trim()
+  if (direct) return direct
+  const tid = String(row?.tid ?? row?.id ?? '').trim()
+  if (!tid) return ''
+  if (/^https?:\/\//i.test(tid)) return tid
+  const uin = String(row?.uin ?? row?.userId ?? row?.qq ?? row?.hostUin ?? '').trim()
+  if (/^[A-Za-z0-9_-]+$/.test(tid) && /^\d{5,12}$/.test(uin)) return `https://user.qzone.qq.com/${uin}/mood/${tid}`
+  return ''
+}
+
 export function timeOf(value) {
   const normalize = (n) => {
     if (!Number.isFinite(n) || n <= 0) return 0
