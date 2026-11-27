@@ -96,6 +96,8 @@ test('面板接口：模板、保存、运行预览、历史、快速预览', as
   assert.equal(listed.templates.length, 2)
   assert.ok(listed.templates.some((t) => t.name === '今日总结'))
   assert.match(listed.version, /^\d+\.\d+\.\d+$/)
+  const manifest = JSON.parse(await readFile(new URL('../module.json', import.meta.url), 'utf8'))
+  assert.equal(listed.version, manifest.version, '运行时报的版本必须和 module.json 一致')
   assert.equal(listed.stage, '测试')
 
   const saved = await routes.get('/save')(bodyReq({ template: { name: '周报', prompt: '写周报' } }))

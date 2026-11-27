@@ -15,7 +15,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.10.6'
+const VERSION = '0.10.7'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -267,7 +267,7 @@ export default {
 
     /** 失败时补一条 Windows 驱动状态，方便判断是卡纸还是根本没联机。 */
     async function failureDetail(printer, reason) {
-      let detail = `打印机：${printer.name}\n原因：${reason || '未知错误'}`
+      let detail = `打印机：${printer.name}\n插件版本：${VERSION}\n原因：${reason || '未知错误'}`
       if (printer.transport === 'windows') {
         try {
           const status = await queryStatus(printer, { timeoutMs: 6000 })
@@ -509,7 +509,7 @@ export default {
       })
       if (!result.ok) {
         log.warn?.(`说说热敏打印失败：${result.error || '未知错误'}`)
-        reportError('说说热敏打印失败', `打印机：${printer.name}\n原因：${result.error || '未知错误'}`)
+        reportError('说说热敏打印失败', `打印机：${printer.name}\n插件版本：${VERSION}\n原因：${result.error || '未知错误'}`)
       }
     }
 
@@ -648,7 +648,7 @@ export default {
       })
       if (!result.ok) {
         await reportError('自检失败', await failureDetail(printer, result.error))
-        return { ok: false, message: `自检失败：${result.error || '未知错误'}` }
+        return { ok: false, message: `自检失败：${result.error || '未知错误'}（插件版本 ${VERSION}）` }
       }
       return {
         ok: true,
@@ -698,7 +698,7 @@ export default {
       })
       if (!result.ok) {
         await reportError('校准页打印失败', await failureDetail(printer, result.error))
-        return { ok: false, message: `校准页打印失败：${result.error || '未知错误'}` }
+        return { ok: false, message: `校准页打印失败：${result.error || '未知错误'}（插件版本 ${VERSION}）` }
       }
       return {
         ok: true,
@@ -714,7 +714,7 @@ export default {
       const result = await queryStatus(printer, { timeoutMs: settings.timeoutMs })
       if (!result.supported) return { ok: false, message: result.error }
       if (!result.ok) {
-        reportError('状态查询失败', `打印机：${printer.name}\n原因：${result.error || '未知错误'}`)
+        reportError('状态查询失败', `打印机：${printer.name}\n插件版本：${VERSION}\n原因：${result.error || '未知错误'}`)
         return { ok: false, message: `状态查询失败：${result.error || '未知错误'}` }
       }
       if (result.driver) {
