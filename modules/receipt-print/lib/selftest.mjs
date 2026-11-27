@@ -288,9 +288,11 @@ export function buildSelfTestPage({
 
   push('bold', '打印头测试图')
   push('normal', `下方 ${dots} 点宽 6 段：1 点/2 点/8 点竖条、斜灰阶、棋盘、实心块，最左最右各一条 1 点竖线。`)
+  // 图片必须紧跟在说明后面；统一塞到末尾会跑到「自检完成」之后，位置就错了。
+  lines.push({ text: '', style: 'image', image: testPattern(dots) })
 
   push('bold', '走纸与切纸')
-  push('normal', '下面走纸 4 行，再按设置半切 / 全切 / 不切。')
+  push('normal', '下面走纸 6 行，再按设置半切 / 全切 / 不切。')
 
   lines.push({ text: '', style: 'normal' })
   lines.push({ text: '-'.repeat(columns), style: 'sep' })
@@ -298,7 +300,7 @@ export function buildSelfTestPage({
 
   return {
     lines,
-    images: [testPattern(dots)],
+    images: [],
     qr: buildSelfTestQr({ printer, paper, settings, transportLabel, version, now, extraInfo }),
     columns,
     dots,

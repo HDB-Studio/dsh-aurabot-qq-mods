@@ -65,6 +65,19 @@ test('等号分隔线跟随有效宽度换算出的列数（80mm → 48 列）',
   assert.ok(!bytes.includes(Buffer.from('='.repeat(49), 'utf8')))
 })
 
+test('行内图片按排版顺序插在文字中间', () => {
+  const raster = { width: 8, height: 1, data: Buffer.from([0xff]) }
+  const bytes = buildReceiptBytes([
+    { text: 'A', style: 'normal' },
+    { text: '', style: 'image', image: raster },
+    { text: 'B', style: 'normal' },
+  ], { encoding: 'utf8', columns: 32 })
+  const posA = bytes.indexOf(Buffer.from('A', 'utf8'))
+  const posImage = bytes.indexOf(Buffer.from([0x1d, 0x76, 0x30]))
+  const posB = bytes.indexOf(Buffer.from('B', 'utf8'))
+  assert.ok(posA >= 0 && posImage > posA && posB > posImage, `顺序应为 A < 图片 < B：${posA}/${posImage}/${posB}`)
+})
+
 test('可以关掉末尾的等号分隔线', () => {
   const bytes = buildReceiptBytes([{ text: '正文' }], { encoding: 'utf8', columns: 32, endSeparator: false })
   assert.ok(!bytes.includes(Buffer.from('='.repeat(32), 'utf8')))

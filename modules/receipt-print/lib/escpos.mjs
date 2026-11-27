@@ -54,8 +54,9 @@ export function rasterCommand({ width, height, data } = {}) {
 
 /**
  * 把排版好的行渲染成 ESC/POS 字节流。
- * lines: [{ text, style?: 'title' | 'center' | 'right' | 'bold' | 'big' | 'large' | 'sep' | 'normal' }]
+ * lines: [{ text, style?: 'title' | 'center' | 'right' | 'bold' | 'big' | 'large' | 'sep' | 'image' | 'normal', image? }]
  * images: [{ width, height, data }] 光栅位图，按顺序放在文字之后、二维码之前。
+ * 行内图片（style: 'image'）会直接插在对应文字位置，适合自检页的打印头测试图。
  */
 export function buildReceiptBytes(lines, options = {}) {
   const {
@@ -83,6 +84,12 @@ export function buildReceiptBytes(lines, options = {}) {
     if (style === 'sep') {
       chunks.push(encode(text || '-'.repeat(Math.max(8, cols))))
       chunks.push(Buffer.from('\n', 'utf8'))
+      continue
+    }
+    // 行内位图：让图片按排版顺序出现在文字中间，而不是统一堆到末尾。
+    if (style === 'image') {
+      const image = line?.image || line?.raster
+      if (image?.data && image.width && image.height) chunks.push(rasterCommand(image))
       continue
     }
     if (style === 'barcode') {

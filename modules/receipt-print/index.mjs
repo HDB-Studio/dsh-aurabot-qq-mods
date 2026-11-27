@@ -19,7 +19,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.21.0'
+const VERSION = '0.22.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -417,7 +417,7 @@ export default {
           cut: printer.cut || settings.cut,
           columns: paper.columns,
           qr,
-          feed: 3,
+          feed: 6,
         })
         const result = await sendBytes(printer, bytes, {
           timeoutMs: settings.timeoutMs,
@@ -473,7 +473,7 @@ export default {
         cut: printer.cut || settings.cut,
         columns: paper.columns,
         qr,
-        feed: 3,
+        feed: 6,
       })
       const result = await sendBytes(printer, bytes, { timeoutMs: settings.timeoutMs, dataDir: api.dataDir() })
       recordPrint({
@@ -568,7 +568,7 @@ export default {
         columns: paper.columns,
         qr,
         images,
-        feed: 3,
+        feed: 6,
       })
       const result = await sendBytes(printer, bytes, { timeoutMs: settings.timeoutMs, dataDir: api.dataDir() })
       const momentId = String(row?.id ?? row?.tid ?? '')
@@ -773,7 +773,7 @@ export default {
         columns: paper.columns,
         qr,
         images,
-        feed: 3,
+        feed: 6,
       })
       const result = await sendBytes(printer, bytes, { timeoutMs: settings.timeoutMs, dataDir: api.dataDir() })
       recordPrint({
@@ -911,7 +911,7 @@ export default {
           columns: paper.columns,
           qr: page.qr,
           images: page.images,
-          feed: 4,
+          feed: 6,
         })
       }
 
@@ -965,7 +965,7 @@ export default {
         cut: printer.cut || settings.cut,
         columns: paper.columns,
         images,
-        feed: 4,
+        feed: 6,
       })
       const result = await sendBytes(printer, bytes, { timeoutMs: settings.timeoutMs, dataDir: api.dataDir() })
       recordPrint({

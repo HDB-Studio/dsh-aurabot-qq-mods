@@ -59,6 +59,17 @@ test('自检页：新增的版式、字符、金额、线条、表格、条码�
   assert.ok(built.lines.some((l) => l.text === '-'.repeat(built.columns)), '应该有满行虚线')
 })
 
+test('自检页：打印头测试图插在说明和走纸之间，不再堆到最末尾', () => {
+  const built = page()
+  const imageIndex = built.lines.findIndex((l) => l.style === 'image')
+  const noteIndex = built.lines.findIndex((l) => /打印头测试图/.test(l.text))
+  const feedIndex = built.lines.findIndex((l) => /走纸与切纸/.test(l.text))
+  assert.ok(imageIndex > noteIndex, '图片要在说明之后')
+  assert.ok(imageIndex < feedIndex, '图片要在走纸说明之前')
+  assert.equal(built.lines[imageIndex].image.width, built.dots)
+  assert.deepEqual(built.images, [], '不再走末尾统一追加的图片数组')
+})
+
 test('刻度行正好铺满 columns 列', () => {
   for (const columns of [32, 48, 24]) {
     assert.equal(rulerLine(columns).length, columns)
