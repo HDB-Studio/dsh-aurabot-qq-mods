@@ -70,3 +70,39 @@ test('自检页文字折行后不溢出：长句按 columns 断行', () => {
   const long = '中文中文中文中文中文中文中文中文中文中文中文中文'
   for (const line of wrapText(long, 32)) assert.ok(displayWidth(line) <= 32)
 })
+
+test('自检页：对齐两段都在，空格填充正好 columns 宽', () => {
+  const built = buildSelfTestPage({
+    printer: { name: 'DL', transport: 'windows', target: 'DL' },
+    paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+    settings: {},
+    transportLabel: 'Windows 打印队列',
+    version: '0.13.0',
+  })
+  const text = built.lines.map((l) => l.text).join('\n')
+  assert.match(text, /对齐测试（对齐指令）/)
+  assert.match(text, /对齐测试（空格填充）/)
+  const centered = built.lines.find((l) => l.text.trim() === 'CENTER' && l.style === 'normal')
+  assert.ok(centered, '应该有空格居中的 CENTER')
+  assert.equal(displayWidth(centered.text), built.columns)
+  const righted = built.lines.find((l) => l.text.trim() === 'RIGHT' && l.style === 'normal')
+  assert.equal(displayWidth(righted.text), built.columns)
+})
+
+test('自检页：详细系统/驱动信息分行，长路径不超宽', () => {
+  const built = buildSelfTestPage({
+    printer: { name: 'DL', transport: 'windows', target: 'DL' },
+    paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+    settings: {},
+    version: '0.13.0',
+    extraInfo: [
+      { title: '系统信息', rows: [['用户名', 'Administrator'], ['计算机名', 'DESKTOP-ABC']] },
+      { title: '驱动程序', rows: [['配置文件', 'C:\\Windows\\System32\\spool\\drivers\\x64\\3\\dl58.dll']] },
+    ],
+  })
+  const text = built.lines.map((l) => l.text)
+  assert.ok(text.includes('用户名：Administrator'))
+  assert.ok(text.includes('计算机名：DESKTOP-ABC'))
+  assert.ok(!text.some((line) => line.includes('C:\\Windows\\System32\\spool\\drivers\\x64\\3\\dl58.dll')), '长路径要折行')
+  for (const line of built.lines) assert.ok(displayWidth(line.text) <= built.columns, line.text)
+})

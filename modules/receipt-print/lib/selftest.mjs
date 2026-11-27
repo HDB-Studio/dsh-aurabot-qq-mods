@@ -15,6 +15,18 @@ export function tickLine(columns) {
   return out
 }
 
+/** 用空格把文字顶到中间 / 右边，驱动忽略对齐指令时靠这段看效果。 */
+export function padCenter(text, columns) {
+  const width = Math.max(0, Math.floor(columns) - displayWidth(text))
+  const left = Math.floor(width / 2)
+  return ' '.repeat(left) + String(text) + ' '.repeat(width - left)
+}
+
+export function padRight(text, columns) {
+  const width = Math.max(0, Math.floor(columns) - displayWidth(text))
+  return ' '.repeat(width) + String(text)
+}
+
 /** 纯 ASCII 方框，宽度正好等于 columns，用来看左右边框有没有被切。 */
 export function boxLines(columns, text = '') {
   const width = Math.max(6, Math.floor(columns))
@@ -71,6 +83,7 @@ export function buildSelfTestPage({
   transportLabel = '',
   version = '',
   now = new Date(),
+  extraInfo = [],
 } = {}) {
   const columns = Math.max(8, Math.min(96, Math.floor(paper.columns) || 32))
   const paperMm = Number(paper.paperMm) || 58
@@ -85,6 +98,8 @@ export function buildSelfTestPage({
     for (const line of wrapText(String(text ?? ''), width)) lines.push({ text: line, style })
   }
   const sep = () => lines.push({ text: '-'.repeat(columns), style: 'sep' })
+  // 空格对齐的行不能被折行逻辑吃掉尾部空格，原样入列
+  const pushExact = (style, text) => lines.push({ text: String(text), style })
 
   push('title', '打印机自检')
   push('center', 'AURABOT · receipt-print')
@@ -101,11 +116,35 @@ export function buildSelfTestPage({
   push('normal', `时间：${stamp.datetime} ${stamp.weekday}`)
   sep()
 
-  push('bold', '对齐测试')
-  push('normal', '左对齐 L')
-  push('center', '居中 C')
-  push('right', '右对齐 R')
-  push('normal', '上面三行应分别贴左、居中、贴右。')
+  for (const section of extraInfo) {
+    if (!section?.rows?.length) continue
+    push('bold', section.title)
+    for (const [key, value] of section.rows) {
+      const text = String(value ?? '').trim()
+      if (!text) continue
+      const head = `${key}：`
+      if (displayWidth(head) + displayWidth(text) <= columns) {
+        push('normal', head + text)
+      } else {
+        // 第一段贴着标签放，剩下的缩进两格续行
+        const firstWidth = Math.max(4, columns - displayWidth(head))
+        const first = wrapText(text, firstWidth)
+        lines.push({ text: head + (first.shift() || ''), style: 'normal' })
+        for (const line of wrapText(first.join(''), Math.max(4, columns - 2))) push('normal', `  ${line}`)
+      }
+    }
+    sep()
+  }
+
+  push('bold', '对齐测试（对齐指令）')
+  push('normal', 'LEFT 左对齐')
+  push('center', 'CENTER 居中')
+  push('right', 'RIGHT 右对齐')
+  push('bold', '对齐测试（空格填充）')
+  push('normal', 'LEFT')
+  pushExact('normal', padCenter('CENTER', columns))
+  pushExact('normal', padRight('RIGHT', columns))
+  push('normal', '两段都居中/贴右说明正常；只有第二段对，说明打印机忽略对齐指令，按空格为准。')
   sep()
 
   push('bold', '字号测试')

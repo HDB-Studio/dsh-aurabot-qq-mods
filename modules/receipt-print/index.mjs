@@ -7,6 +7,7 @@ import { buildReceiptBytes } from './lib/escpos.mjs'
 import { decodeEscpos, decodeStatusBytes, searchCommands } from './lib/escpos-decode.mjs'
 import { buildLines, buildPrompt, cleanModelText, previewText, formatDate, PLACEHOLDER_DOCS } from './lib/templates.mjs'
 import { buildSelfTestPage } from './lib/selftest.mjs'
+import { collectDetails } from './lib/sysinfo.mjs'
 import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
@@ -17,7 +18,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.12.0'
+const VERSION = '0.13.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -783,6 +784,7 @@ export default {
         if (!parsed.bytes.length) return { ok: false, message: '自检指令是空的' }
         bytes = parsed.bytes
       } else {
+        const extraInfo = await collectDetails(printer, { version: VERSION })
         const page = buildSelfTestPage({
           printer,
           paper,
@@ -790,6 +792,7 @@ export default {
           transportLabel: TRANSPORT_LABELS[printer.transport] || printer.transport,
           version: VERSION,
           now: new Date(),
+          extraInfo,
         })
         bytes = buildReceiptBytes(page.lines, {
           encoding: printer.encoding || settings.encoding,
