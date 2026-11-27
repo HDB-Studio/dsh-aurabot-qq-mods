@@ -51,7 +51,7 @@ export function rasterCommand({ width, height, data } = {}) {
 
 /**
  * 把排版好的行渲染成 ESC/POS 字节流。
- * lines: [{ text, style?: 'title' | 'normal' | 'muted' }]
+ * lines: [{ text, style?: 'title' | 'center' | 'right' | 'bold' | 'big' | 'large' | 'sep' | 'normal' }]
  * images: [{ width, height, data }] 光栅位图，按顺序放在文字之后、二维码之前。
  */
 export function buildReceiptBytes(lines, options = {}) {
@@ -75,20 +75,22 @@ export function buildReceiptBytes(lines, options = {}) {
 
   for (const line of lines || []) {
     const text = String(line?.text ?? '')
-    if (line?.style === 'title') {
-      chunks.push(Buffer.from([ESC, 0x61, 0x01])) // 居中
-      chunks.push(Buffer.from([GS, 0x21, 0x11])) // 倍宽倍高
-      chunks.push(encode(text))
-      chunks.push(Buffer.from([GS, 0x21, 0x00]))
-      chunks.push(Buffer.from([ESC, 0x61, 0x00]))
-      chunks.push(Buffer.from('\n', 'utf8'))
-    } else if (line?.style === 'sep') {
+    const style = line?.style || 'normal'
+    if (style === 'sep') {
       chunks.push(encode(text || '-'.repeat(Math.max(8, cols))))
       chunks.push(Buffer.from('\n', 'utf8'))
-    } else {
-      chunks.push(encode(text))
-      chunks.push(Buffer.from('\n', 'utf8'))
+      continue
     }
+    if (style === 'center' || style === 'title') chunks.push(Buffer.from([ESC, 0x61, 0x01])) // 居中
+    else if (style === 'right') chunks.push(Buffer.from([ESC, 0x61, 0x02])) // 右对齐
+    if (style === 'title' || style === 'large') chunks.push(Buffer.from([GS, 0x21, 0x11])) // 倍宽倍高
+    else if (style === 'big') chunks.push(Buffer.from([GS, 0x21, 0x01])) // 倍高
+    if (style === 'bold' || style === 'title') chunks.push(Buffer.from([ESC, 0x45, 0x01])) // 加粗
+    chunks.push(encode(text))
+    if (style === 'title' || style === 'large' || style === 'big') chunks.push(Buffer.from([GS, 0x21, 0x00]))
+    if (style === 'bold' || style === 'title') chunks.push(Buffer.from([ESC, 0x45, 0x00]))
+    if (style === 'center' || style === 'right' || style === 'title') chunks.push(Buffer.from([ESC, 0x61, 0x00]))
+    chunks.push(Buffer.from('\n', 'utf8'))
   }
 
   for (const image of images || []) {

@@ -6,6 +6,7 @@ import { renderDriverStatus } from './lib/win-status.mjs'
 import { buildReceiptBytes } from './lib/escpos.mjs'
 import { decodeEscpos, decodeStatusBytes, searchCommands } from './lib/escpos-decode.mjs'
 import { buildLines, buildPrompt, cleanModelText, previewText, formatDate, PLACEHOLDER_DOCS } from './lib/templates.mjs'
+import { buildSelfTestPage } from './lib/selftest.mjs'
 import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
@@ -16,7 +17,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.11.1'
+const VERSION = '0.12.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -762,10 +763,6 @@ export default {
       return `打印机：${printer.name} · ${TRANSPORT_LABELS[printer.transport] || printer.transport}${target} · ${paper.paperMm}mm / ${paper.columns} 列`
     }
 
-    function rulerLine(columns) {
-      return '1234567890'.repeat(Math.ceil(columns / 10) + 1).slice(0, columns)
-    }
-
     /**
      * 一键自检：默认发内置 ESC/POS 自检页（纸宽、列数、编码、中文、刻度尺、二维码、切纸）。
      * 打印机或全局设置了 selfTestHex 时，原样发送那段十六进制指令。
@@ -786,34 +783,20 @@ export default {
         if (!parsed.bytes.length) return { ok: false, message: '自检指令是空的' }
         bytes = parsed.bytes
       } else {
-        const body = [
-          `打印机：${printer.name}`,
-          `通道：${TRANSPORT_LABELS[printer.transport] || printer.transport}`,
-          `目标：${printer.transport === 'preview' ? '不实际出纸' : (printer.target || '未填')}`,
-          `纸宽：${paper.paperMm}mm / 有效 ${paper.effectiveMm}mm / 每行 ${paper.columns} 列`,
-          `编码：${printer.encoding} · 切纸：${printer.cut}`,
-          '',
-          '中文测试：热敏打印中文正常',
-          'ASCII: ABC abc 0123456789',
-          rulerLine(paper.columns),
-          '上面这行数字如果正好铺满纸宽，说明有效宽度设置正确。',
-        ].join('\n')
-        const { lines, qr } = buildLines({
-          template: { name: '打印机自检' },
-          body,
-          width: paper.columns,
-          paperMm: paper.paperMm,
-          effectiveMm: paper.effectiveMm,
-          showHeader: true,
-          footer: '{date} {time}',
-          qr: 'AURABOT receipt-print',
+        const page = buildSelfTestPage({
+          printer,
+          paper,
+          settings,
+          transportLabel: TRANSPORT_LABELS[printer.transport] || printer.transport,
+          version: VERSION,
           now: new Date(),
         })
-        bytes = buildReceiptBytes(lines, {
+        bytes = buildReceiptBytes(page.lines, {
           encoding: printer.encoding || settings.encoding,
           cut: printer.cut || settings.cut,
           columns: paper.columns,
-          qr,
+          qr: page.qr,
+          images: page.images,
           feed: 4,
         })
       }
@@ -828,7 +811,7 @@ export default {
         chars: customHex ? customHex.length : paper.columns,
         text: customHex
           ? `自定义自检指令：\n${customHex}`
-          : `内置自检页\n纸宽：${paper.paperMm}mm · 有效：${paper.effectiveMm}mm · 每行 ${paper.columns} 列\n编码：${settings.encoding} · 切纸：${settings.cut}`,
+          : `内置自检页\n纸宽：${paper.paperMm}mm · 有效：${paper.effectiveMm}mm · 每行 ${paper.columns} 列\n编码：${settings.encoding} · 切纸：${settings.cut}\n设备信息 / 对齐 / 字号 / 字符 / 刻度 / 打印头测试图`,
         trigger: options.trigger || { type: 'command', reason: '自检' },
         preview: false,
       })

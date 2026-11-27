@@ -1,0 +1,72 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { buildSelfTestPage, rulerLine, tickLine, boxLines, testPattern } from '../lib/selftest.mjs'
+import { displayWidth, wrapText } from '../lib/layout.mjs'
+
+const page = () => buildSelfTestPage({
+  printer: { name: 'DL', transport: 'windows', target: 'DL', encoding: 'gbk', cut: 'partial' },
+  paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+  settings: { encoding: 'gbk', cut: 'partial', imageDither: true },
+  transportLabel: 'Windows 打印队列',
+  version: '0.12.0',
+  now: new Date(2026, 10, 27, 10, 30, 0),
+})
+
+test('自检页：每行都不超纸宽，倍宽标题按半宽算', () => {
+  const built = page()
+  for (const line of built.lines) {
+    const width = displayWidth(line.text)
+    if (line.style === 'title') assert.ok(width * 2 <= built.columns, `标题超宽：${line.text}`)
+    else assert.ok(width <= built.columns, `行超宽（${width}/${built.columns}）：${line.text}`)
+  }
+})
+
+test('自检页：设备信息带打印机名、版本和时间', () => {
+  const text = page().lines.map((l) => l.text).join('\n')
+  assert.match(text, /打印机：DL/)
+  assert.match(text, /Windows 打印队列/)
+  assert.match(text, /纸宽：58mm · 有效 48mm · 32 列/)
+  assert.match(text, /插件：0\.12\.0/)
+  assert.match(text, /2026-11-27 10:30 星期五/)
+})
+
+test('自检页：对齐、字号、字符、刻度都在，且有居中/右对齐样式', () => {
+  const built = page()
+  const styles = new Set(built.lines.map((l) => l.style))
+  for (const style of ['title', 'center', 'right', 'bold', 'big', 'large', 'sep']) assert.ok(styles.has(style), `缺少样式 ${style}`)
+  const text = built.lines.map((l) => l.text).join('\n')
+  assert.match(text, /中文：热敏打印中文正常/)
+  assert.match(text, /打印头测试图/)
+  assert.ok(built.lines.some((l) => l.text === rulerLine(built.columns)))
+})
+
+test('刻度行正好铺满 columns 列', () => {
+  for (const columns of [32, 48, 24]) {
+    assert.equal(rulerLine(columns).length, columns)
+    assert.equal(tickLine(columns).length, columns)
+    assert.equal(displayWidth(tickLine(columns)), columns)
+  }
+})
+
+test('方框每行都是 columns 宽', () => {
+  const box = boxLines(32, 'BOARD')
+  assert.equal(box.length, 3)
+  for (const line of box) assert.equal(displayWidth(line), 32, line)
+  assert.match(box[1], /BOARD/)
+})
+
+test('打印头测试图：宽度等于点数，四周有黑点', () => {
+  const image = testPattern(384)
+  assert.equal(image.width, 384)
+  assert.ok(image.height >= 24)
+  assert.equal(image.data.length, Math.ceil(384 / 8) * image.height)
+  const bitAt = (x, y) => (image.data[y * Math.ceil(384 / 8) + (x >> 3)] & (0x80 >> (x & 7))) !== 0
+  assert.ok(bitAt(0, 0), '左边框应该是黑的')
+  assert.ok(bitAt(383, image.height - 1), '右边框应该是黑的')
+  assert.ok(bitAt(2, 1), '顶部竖条应该有点')
+})
+
+test('自检页文字折行后不溢出：长句按 columns 断行', () => {
+  const long = '中文中文中文中文中文中文中文中文中文中文中文中文'
+  for (const line of wrapText(long, 32)) assert.ok(displayWidth(line) <= 32)
+})

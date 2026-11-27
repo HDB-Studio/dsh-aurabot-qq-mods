@@ -50,3 +50,23 @@ test('二维码指令', () => {
   assert.ok(find(bytes, [0x1d, 0x28, 0x6b]))
   assert.ok(bytes.includes(Buffer.from('https://example.com', 'utf8')))
 })
+
+test('样式指令：居中/右对齐/加粗/倍高/倍宽倍高', () => {
+  const center = buildReceiptBytes([{ text: 'C', style: 'center' }], { encoding: 'utf8' })
+  assert.ok(center.includes(Buffer.from([0x1b, 0x61, 0x01])))
+  assert.ok(center.includes(Buffer.from([0x1b, 0x61, 0x00])), '对齐要复位')
+
+  const right = buildReceiptBytes([{ text: 'R', style: 'right' }], { encoding: 'utf8' })
+  assert.ok(right.includes(Buffer.from([0x1b, 0x61, 0x02])))
+
+  const bold = buildReceiptBytes([{ text: 'B', style: 'bold' }], { encoding: 'utf8' })
+  assert.ok(bold.includes(Buffer.from([0x1b, 0x45, 0x01])))
+  assert.ok(bold.includes(Buffer.from([0x1b, 0x45, 0x00])))
+
+  const big = buildReceiptBytes([{ text: 'B', style: 'big' }], { encoding: 'utf8' })
+  assert.ok(big.includes(Buffer.from([0x1d, 0x21, 0x01])))
+
+  const large = buildReceiptBytes([{ text: 'L', style: 'large' }], { encoding: 'utf8' })
+  assert.ok(large.includes(Buffer.from([0x1d, 0x21, 0x11])))
+  assert.ok(large.includes(Buffer.from([0x1d, 0x21, 0x00])), '字号要复位')
+})

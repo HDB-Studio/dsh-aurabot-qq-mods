@@ -1,7 +1,7 @@
 {
   "id": "receipt-print",
   "name": "热敏打印",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "把模板和提示词变成热敏小票，也能直接打印私聊发来的文字、图片和网页链接；说说自动打印、真机校准、ESC/POS 指令表、打印备份和失败私聊。支持 Windows USB 队列、网口 9100、CUPS 和预览。",
   "category": "desktop",
   "tags": [
