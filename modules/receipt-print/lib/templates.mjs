@@ -2,7 +2,21 @@
 import { wrapText } from './layout.mjs'
 import { funLines } from './fun.mjs'
 
-export const PLACEHOLDERS = ['date', 'weekday', 'time', 'datetime', 'weekdayNum', 'width', 'paper', 'effective', 'columns', 'name']
+// 能用的占位符：key / 说明 / 例子。改这里要顺手改 README 的占位符表。
+export const PLACEHOLDER_DOCS = [
+  ['date', '日期', '2026-11-27'],
+  ['time', '时分', '09:05'],
+  ['datetime', '日期 + 时间', '2026-11-27 09:05'],
+  ['weekday', '中文星期', '星期五'],
+  ['weekdayNum', '星期数字，0 = 周日', '5'],
+  ['width', '每行字符数', '32'],
+  ['columns', '每行字符数（同 width）', '32'],
+  ['paper', '纸张宽度 mm', '58'],
+  ['effective', '有效打印宽度 mm', '48'],
+  ['name', '当前模板名', '每日简报'],
+]
+
+export const PLACEHOLDERS = PLACEHOLDER_DOCS.map(([key]) => key)
 
 const WEEKDAY_CN = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 

@@ -472,3 +472,12 @@ test('消息打印：关掉后完全不响应', async () => {
   await handlers.get('message')({ kind: 'private', userId: '1', text: '打印我' })
   assert.equal(replies.length, 0)
 })
+
+test('/占位符 列出全部占位符和说明', async () => {
+  const { commands } = await boot()
+  const text = await commands.get('占位符').run('')
+  for (const key of ['date', 'time', 'datetime', 'weekday', 'weekdayNum', 'width', 'columns', 'paper', 'effective', 'name']) {
+    assert.match(text, new RegExp(`\\{${key}\\}`))
+  }
+  assert.match(text, /不认识的 \{xxx\} 会原样保留/)
+})

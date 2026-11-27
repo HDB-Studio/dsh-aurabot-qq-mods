@@ -5,7 +5,7 @@ import { normalizePrinter, sendBytes, queryStatus, TRANSPORT_LABELS } from './li
 import { renderDriverStatus } from './lib/win-status.mjs'
 import { buildReceiptBytes } from './lib/escpos.mjs'
 import { decodeEscpos, decodeStatusBytes, searchCommands } from './lib/escpos-decode.mjs'
-import { buildLines, buildPrompt, cleanModelText, previewText, formatDate } from './lib/templates.mjs'
+import { buildLines, buildPrompt, cleanModelText, previewText, formatDate, PLACEHOLDER_DOCS } from './lib/templates.mjs'
 import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
@@ -16,7 +16,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.11.0'
+const VERSION = '0.11.1'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -195,8 +195,8 @@ export default {
     { key: 'fun', label: '每日彩蛋', type: 'switch', hint: '模板底部加幸运数字、幸运色、关键词和小图案，同一天重打内容不变' },
     { key: 'reportErrors', label: '出错私聊主人', type: 'switch', hint: '打印失败或打印机返回错误状态时，主动私聊主人账号' },
     { key: 'backupDir', label: '备份目录', type: 'text', placeholder: '留空 = modules-data/receipt-print/backups；可粘贴绝对路径', hint: '每次打印写一个 receipt-*.txt；目录不可写时自动退回默认目录' },
-    { key: 'footer', label: '全局页脚', type: 'text', placeholder: '可留空；支持 {date} 等占位符' },
-    { key: 'qrText', label: '二维码内容', type: 'text', placeholder: '留空不打印；支持 {date} 等占位符' },
+    { key: 'footer', label: '全局页脚', type: 'text', placeholder: '可留空；支持 {date} {time} {weekday} {width} 等，发 /占位符 看全表' },
+    { key: 'qrText', label: '二维码内容', type: 'text', placeholder: '留空不打印；支持 {date} {name} {columns} 等，发 /占位符 看全表' },
     { key: 'timeoutMs', label: '打印超时（毫秒）', type: 'number', min: 1000, max: 30000, step: 500 },
     { key: 'momentAuto', label: '说说自动打印', type: 'switch', hint: '她每次发空间说说后，自动排版打印成小票' },
     { key: 'momentIncludeSelf', label: '连仅自己可见的也说打印', type: 'switch', hint: '默认只打印公开发布的说说' },
@@ -1113,6 +1113,22 @@ export default {
           `编码：${settings.encoding} · 切纸：${settings.cut} · 自检：${selfTestLabel}`,
           '状态回读需要网口 9100 直连；Windows 队列和 CUPS 只能发不能读。',
           '去面板「热敏打印」里改打印机和纸宽。',
+        ].join('\n')
+      },
+    })
+
+    api.command({
+      name: '占位符',
+      aliases: ['手册'],
+      desc: '看模板提示词、页脚、二维码里能用的占位符',
+      run() {
+        const width = Math.max(...PLACEHOLDER_DOCS.map(([key]) => key.length)) + 2
+        const lines = PLACEHOLDER_DOCS.map(([key, desc, example]) => `{${key}}`.padEnd(width + 2) + desc.padEnd(18) + example)
+        return [
+          '能用的占位符（写在模板提示词、系统提示词、页脚、二维码内容里）：',
+          ...lines,
+          '',
+          '不认识的 {xxx} 会原样保留；模板标题不替换占位符；{width} 和 {columns} 是每行字符数，不是毫米。',
         ].join('\n')
       },
     })
