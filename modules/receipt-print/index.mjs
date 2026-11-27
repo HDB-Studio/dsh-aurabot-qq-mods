@@ -9,13 +9,13 @@ import { buildLines, buildPrompt, cleanModelText, previewText, formatDate } from
 import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
-import { pickNewMoments, extractImageSources, timeOf } from './lib/moments.mjs'
+import { pickNewMoments, extractImageSources, timeOf, describeMoments } from './lib/moments.mjs'
 import { readFile } from 'node:fs/promises'
 import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.10.7'
+const VERSION = '0.10.8'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -515,6 +515,7 @@ export default {
 
     // diary 是内置模块；没有就说说明宿主不支持，静默跳过。
     let momentsBusy = false
+    let momentsWarned = false
     async function checkMoments() {
       if (momentsBusy) return
       momentsBusy = true
@@ -527,16 +528,22 @@ export default {
 
     async function scanMoments() {
       const settings = settingsNow()
-      if (!termsAccepted(settings)) return
-      if (settings.enabled === false || !settings.momentAuto) return
+      if (!termsAccepted(settings)) return 0
+      if (settings.enabled === false || !settings.momentAuto) return 0
       const diary = typeof api.use === 'function' ? api.use('diary') : null
-      if (!diary || typeof diary.history !== 'function') return
+      if (!diary || typeof diary.history !== 'function') {
+        if (!momentsWarned) {
+          momentsWarned = true
+          log.warn?.('说说自动打印：找不到 diary 模块（或它没有 history 接口），先用 /打印机 说说 看看')
+        }
+        return 0
+      }
       let list
       try {
         list = await diary.history()
       } catch (error) {
         log.warn?.(`读说说失败：${error.message}`)
-        return
+        return 0
       }
       const { rows, watermark } = pickNewMoments(list, store.momentLast(), {
         includeSelf: settings.momentIncludeSelf,
@@ -544,13 +551,54 @@ export default {
       // 第一次启动只记下当前位置，避免把以前的说说全打一遍。
       if (!store.momentSeeded()) {
         store.markMoment(watermark, { seeded: true })
-        return
+        return 0
       }
+      let printed = 0
       for (const row of rows) {
         store.markMoment(timeOf(row.at ?? row.time ?? row.createdAt))
-        await printMoment(row)
+        try {
+          await printMoment(row)
+          printed += 1
+        } catch (error) {
+          log.warn?.(`说说小票失败：${error.message}`)
+          reportError('说说热敏打印失败', `打印机：${currentPrinter(settings)?.name || '未配置'}\n插件版本：${VERSION}\n原因：${error.message}`)
+        }
       }
       store.markMoment(watermark)
+      return printed
+    }
+
+    /** 排查用：说明自动打印的开关、diary 模块状态、水位和待打条数；force=true 时立刻补打一次。 */
+    async function momentsReport({ force = false } = {}) {
+      const settings = settingsNow()
+      let diaryState = 'ok'
+      let error = ''
+      let list = []
+      const diary = typeof api.use === 'function' ? api.use('diary') : null
+      if (!diary) diaryState = 'missing'
+      else if (typeof diary.history !== 'function') diaryState = 'old'
+      else {
+        try {
+          list = (await diary.history()) || []
+        } catch (caught) {
+          diaryState = 'error'
+          error = caught.message
+        }
+      }
+      const lines = [describeMoments({
+        auto: settings.momentAuto !== false,
+        includeSelf: settings.momentIncludeSelf === true,
+        diary: diaryState,
+        error,
+        list,
+        lastAt: store.momentLast(),
+        seeded: store.momentSeeded(),
+      })]
+      if (force && diaryState === 'ok' && settings.momentAuto !== false) {
+        const printed = await scanMoments()
+        lines.push(printed ? `刚刚打了 ${printed} 条` : '没有需要补打的说说')
+      }
+      return lines.join('\n')
     }
 
     function templateLine(template) {
@@ -911,6 +959,8 @@ export default {
         if (/^(测试|自检)/.test(text)) return (await selfTest()).message
         if (/^校准/.test(text)) return (await printCalibration()).message
         if (/^状态/.test(text)) return (await printerStatus()).message
+        if (/^补打/.test(text)) return momentsReport({ force: true })
+        if (/^说说/.test(text)) return momentsReport()
         const settings = settingsNow()
         const paper = resolvePaper({ paperWidthMm: settings.paperWidthMm, effectiveWidthMm: settings.effectiveWidthMm })
         const selfTestLabel = settings.selfTestHex ? '自定义指令' : '内置 ESC/POS 自检页'
