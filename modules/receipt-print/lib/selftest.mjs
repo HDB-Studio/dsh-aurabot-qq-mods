@@ -77,9 +77,25 @@ export function testPattern(dots, height = 48) {
   return { width, height: rows, data }
 }
 
+// 自检二维码至少用 4 点模块（58mm 纸约 0.5mm），再小手机很难扫。
+const QR_MIN_MODULE = 4
+const TRANSPORT_SHORT = { windows: 'USB', tcp: '9100', cups: 'CUPS', preview: '预览' }
+
+/** 长路径只留文件名；太长再截断，省字节让二维码更疏。 */
+function compactQrValue(value) {
+  let text = String(value ?? '').replace(/\s+/g, ' ').trim()
+  if (!text) return ''
+  if (text.length > 12 && text.includes('\\')) {
+    const parts = text.split(/[\\/]/).filter(Boolean)
+    if (parts.length > 1) text = `…/${parts.pop()}`
+  }
+  return text.length > 80 ? `${text.slice(0, 79)}…` : text
+}
+
 /**
- * 自检页二维码：把这台机器这次自检的全部信息写进去（设备、系统、打印机、驱动、端口、时间），
+ * 自检页二维码：把这台机器这次自检的信息写进去（设备、系统、打印机、驱动、端口、时间），
  * 手机扫一下就能看到完整质检结果，不用逐行抄纸。
+ * 为了扫得出来，二维码内容会压缩：去掉重复字段、长路径只留文件名，再按纸宽截断。
  */
 export function buildSelfTestQr({
   printer = {},
@@ -95,25 +111,32 @@ export function buildSelfTestQr({
   const effectiveMm = Number(paper.effectiveMm) || 48
   const dots = Number(paper.dots) || effectiveMm * 8
   const stamp = formatDate(now)
+  const name = String(printer.name || '未命名')
+  const target = printer.transport === 'preview' ? '' : String(printer.target || '').trim()
+  const transport = TRANSPORT_SHORT[printer.transport] || transportLabel || printer.transport || '未知'
   const lines = [
-    `AURABOT 热敏打印 自检 v${version || '-'}`,
-    `打印机：${printer.name || '未命名'}`,
-    `通道：${transportLabel || printer.transport || '未知'}`,
-    `目标：${printer.transport === 'preview' ? '不实际出纸' : (printer.target || '未填')}`,
-    `纸宽：${paperMm}mm · 有效 ${effectiveMm}mm · ${columns} 列`,
-    `编码：${printer.encoding || settings.encoding || 'gbk'} · 切纸：${printer.cut || settings.cut || 'partial'} · 抖动：${settings.imageDither === false ? '关' : '开'}`,
+    `AURABOT 自检 v${version || '-'}`,
+    `打印机：${name}`,
+    `通道：${transport}${target && target !== name ? ` 目标：${target}` : ''}`,
+    `纸张：${paperMm}/${effectiveMm}mm ${columns}列`,
+    `编码：${printer.encoding || settings.encoding || 'gbk'} 切纸：${printer.cut || settings.cut || 'partial'}`,
     `时间：${stamp.datetime} ${stamp.weekday}`,
   ]
   for (const section of extraInfo) {
     if (!section?.rows?.length) continue
-    lines.push(`[${section.title}]`)
     for (const [key, value] of section.rows) {
-      const text = String(value ?? '').replace(/\s+/g, ' ').trim()
-      if (text) lines.push(`${key}：${text}`)
+      const text = compactQrValue(value)
+      if (!text) continue
+      // 和页头重复的、没信息量的字段不进二维码
+      if (key === '插件版本' || key === '系统运行') continue
+      if (key === '打印机名称' && text === name) continue
+      if (key === '共享' && /^(否|no)$/i.test(text)) continue
+      if (key === '状态' && /^(normal|ok|idle|空闲)$/i.test(text)) continue
+      lines.push(`${key}：${text}`)
     }
   }
-  // 再长就扫不清了：先按纸宽点数算能塞多少，再用硬上限兜底
-  const maxBytes = Math.max(200, Math.min(QR_MAX_BYTES, qrCapacityForDots(dots, 2)))
+  // 内容再多就按 4 点模块算容量截断，保证二维码不超纸边、还能扫
+  const maxBytes = Math.max(200, Math.min(QR_MAX_BYTES, qrCapacityForDots(dots, QR_MIN_MODULE)))
   return clipQrText(lines.join('\n'), maxBytes)
 }
 

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildSelfTestPage, buildSelfTestQr, rulerLine, tickLine, boxLines, testPattern } from '../lib/selftest.mjs'
+import { qrCapacityForDots, qrModuleSize } from '../lib/qr.mjs'
 import { displayWidth, wrapText } from '../lib/layout.mjs'
 
 const page = () => buildSelfTestPage({
@@ -121,10 +122,23 @@ test('自检二维码：包含设备、系统、打印机、驱动、端口和�
       { title: '驱动程序', rows: [['驱动版本', '1.2.3']] },
     ],
   })
-  for (const part of ['AURABOT', '自检', '打印机：DL', 'Windows 打印队列', '58mm', '32 列', 'v0.15.0', '2026-11-27 10:30', '用户名：Administrator', '计算机名：DESKTOP-ABC', '打印机型号：DL-58', '端口名称：USB001', '驱动版本：1.2.3']) {
+  for (const part of ['AURABOT', '自检', '打印机：DL', '通道：USB', '纸张：58/48mm', '32列', 'v0.15.0', '2026-11-27 10:30', '用户名：Administrator', '计算机名：DESKTOP-ABC', '打印机型号：DL-58', '端口名称：USB001', '驱动版本：1.2.3']) {
     assert.ok(qr.includes(part), `二维码缺少 ${part}`)
   }
-  assert.ok(Buffer.byteLength(qr, 'utf8') <= 1200, '二维码内容不能无限长')
+  const bytes = Buffer.byteLength(qr, 'utf8')
+  assert.ok(bytes <= qrCapacityForDots(384, 4), '二维码内容不能超过 4 点模块的容量')
+  assert.ok(qrModuleSize({ bytes, dots: 384 }) >= 4, '58mm 纸上的自检二维码至少 4 点模块')
+})
+
+test('自检二维码：长驱动路径只留文件名，扫得清也扫得全', () => {
+  const qr = buildSelfTestQr({
+    printer: { name: 'DL', transport: 'windows', target: 'DL' },
+    paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+    version: '0.19.0',
+    extraInfo: [{ title: '驱动程序', rows: [['INF 文件', 'C:\\Windows\\INF\\oem12.inf']] }],
+  })
+  assert.ok(qr.includes('INF 文件：…/oem12.inf'), qr)
+  assert.ok(!qr.includes('C:\\Windows\\INF'), '长路径不该整段塞进二维码')
 })
 
 test('自检二维码：内容超长时截断并加省略号，不超纸宽容量', () => {
@@ -135,7 +149,7 @@ test('自检二维码：内容超长时截断并加省略号，不超纸宽容�
     version: '0.15.0',
     extraInfo: [{ title: '驱动程序', rows: longRows }],
   })
-  assert.ok(Buffer.byteLength(qr, 'utf8') <= 1200)
+  assert.ok(Buffer.byteLength(qr, 'utf8') <= qrCapacityForDots(384, 4))
   assert.ok(qr.endsWith('…'))
   assert.ok(!qr.includes('\uFFFD'))
 })
