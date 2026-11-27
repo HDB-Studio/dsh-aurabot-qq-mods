@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveQr } from '../lib/qr.mjs'
+import { resolveQr, clipQrText, qrCapacityForDots, qrModuleSize, qrVersionForBytes } from '../lib/qr.mjs'
 import { momentUrl } from '../lib/moments.mjs'
 
 test('二维码：auto 有链接就用链接', () => {
@@ -28,4 +28,28 @@ test('说说网址：拼不出来就返回空，交给固定二维码', () => {
   assert.equal(momentUrl({}), '')
   assert.equal(momentUrl({ tid: 'ABC' }), '')
   assert.equal(momentUrl({ tid: 'ABC', uin: 'abc' }), '')
+})
+
+test('二维码尺寸：短内容仍用 6，长内容自动缩小不出纸边', () => {
+  assert.equal(qrModuleSize({ bytes: 20, dots: 384 }), 6)
+  const long = qrModuleSize({ bytes: 1200, dots: 384 })
+  assert.ok(long >= 2 && long < 6, `长内容应该缩小：${long}`)
+  assert.ok(qrVersionForBytes(20) <= 2)
+  assert.ok(qrVersionForBytes(1200) > 20)
+})
+
+test('二维码容量：纸越窄能塞的字越少，但至少能放一个短链接', () => {
+  const wide = qrCapacityForDots(576, 2)
+  const narrow = qrCapacityForDots(240, 2)
+  assert.ok(wide > narrow)
+  assert.ok(narrow >= 100)
+})
+
+test('二维码截断：不切坏中文，末尾加省略号，不超字节上限', () => {
+  const text = '打印机：DL\n驱动：C:\\Windows\\System32\\spool\\drivers\\x64\\3\\dl58.dll\n端口：USB001'
+  assert.equal(clipQrText(text, 4096), text)
+  const clipped = clipQrText(text, 60)
+  assert.ok(Buffer.byteLength(clipped, 'utf8') <= 60, `超长了：${Buffer.byteLength(clipped, 'utf8')}`)
+  assert.ok(clipped.endsWith('…'))
+  assert.ok(!clipped.includes('\uFFFD'), '不能切出乱码')
 })

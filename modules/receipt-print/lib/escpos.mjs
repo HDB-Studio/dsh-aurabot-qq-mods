@@ -1,6 +1,7 @@
 // ESC/POS 指令拼装。只做小票需要的最小子集：
 // 初始化、中文模式、对齐、加粗、倍宽倍高、换行、图片位图、二维码、切纸。
 import iconv from 'iconv-lite'
+import { qrModuleSize } from './qr.mjs'
 
 const ESC = 0x1b
 const GS = 0x1d
@@ -13,12 +14,14 @@ function encoder(encoding) {
   return (text) => iconv.encode(String(text), target)
 }
 
-function qrCommands(data) {
+function qrCommands(data, dots = 384) {
   const payload = Buffer.from(String(data), 'utf8')
   const len = payload.length + 3
+  // 内容多时自动缩小模块，避免二维码宽过纸面被切；内容少时仍是 6。
+  const moduleSize = qrModuleSize({ bytes: payload.length, dots })
   return [
     Buffer.from([GS, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]), // model 2
-    Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, 0x06]), // module size 6
+    Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, moduleSize]), // module size
     Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31]), // error correction M
     Buffer.from([GS, 0x28, 0x6b, len & 0xff, (len >> 8) & 0xff, 0x31, 0x50, 0x30]), // store
     payload,
@@ -100,7 +103,7 @@ export function buildReceiptBytes(lines, options = {}) {
 
   if (qr) {
     chunks.push(Buffer.from([ESC, 0x61, 0x01]))
-    for (const chunk of qrCommands(qr)) chunks.push(chunk)
+    for (const chunk of qrCommands(qr, cols * 12)) chunks.push(chunk)
     chunks.push(Buffer.from('\n', 'utf8'))
     chunks.push(Buffer.from([ESC, 0x61, 0x00]))
   }

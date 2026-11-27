@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildSelfTestPage, rulerLine, tickLine, boxLines, testPattern } from '../lib/selftest.mjs'
+import { buildSelfTestPage, buildSelfTestQr, rulerLine, tickLine, boxLines, testPattern } from '../lib/selftest.mjs'
 import { displayWidth, wrapText } from '../lib/layout.mjs'
 
 const page = () => buildSelfTestPage({
@@ -105,4 +105,37 @@ test('自检页：详细系统/驱动信息分行，长路径不超宽', () => {
   assert.ok(text.includes('计算机名：DESKTOP-ABC'))
   assert.ok(!text.some((line) => line.includes('C:\\Windows\\System32\\spool\\drivers\\x64\\3\\dl58.dll')), '长路径要折行')
   for (const line of built.lines) assert.ok(displayWidth(line.text) <= built.columns, line.text)
+})
+
+test('自检二维码：包含设备、系统、打印机、驱动、端口和时间', () => {
+  const qr = buildSelfTestQr({
+    printer: { name: 'DL', transport: 'windows', target: 'DL', encoding: 'gbk', cut: 'partial' },
+    paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+    settings: { encoding: 'gbk', cut: 'partial', imageDither: true },
+    transportLabel: 'Windows 打印队列',
+    version: '0.15.0',
+    now: new Date(2026, 10, 27, 10, 30, 0),
+    extraInfo: [
+      { title: '系统信息', rows: [['用户名', 'Administrator'], ['计算机名', 'DESKTOP-ABC']] },
+      { title: '打印机信息', rows: [['打印机型号', 'DL-58'], ['端口名称', 'USB001']] },
+      { title: '驱动程序', rows: [['驱动版本', '1.2.3']] },
+    ],
+  })
+  for (const part of ['AURABOT', '自检', '打印机：DL', 'Windows 打印队列', '58mm', '32 列', 'v0.15.0', '2026-11-27 10:30', '用户名：Administrator', '计算机名：DESKTOP-ABC', '打印机型号：DL-58', '端口名称：USB001', '驱动版本：1.2.3']) {
+    assert.ok(qr.includes(part), `二维码缺少 ${part}`)
+  }
+  assert.ok(Buffer.byteLength(qr, 'utf8') <= 1200, '二维码内容不能无限长')
+})
+
+test('自检二维码：内容超长时截断并加省略号，不超纸宽容量', () => {
+  const longRows = Array.from({ length: 80 }, (_, i) => [`文件${i}`, `C:\\Windows\\System32\\spool\\drivers\\x64\\3\\driver-${i}.dll`])
+  const qr = buildSelfTestQr({
+    printer: { name: 'DL', transport: 'windows', target: 'DL' },
+    paper: { columns: 32, paperMm: 58, effectiveMm: 48, dots: 384 },
+    version: '0.15.0',
+    extraInfo: [{ title: '驱动程序', rows: longRows }],
+  })
+  assert.ok(Buffer.byteLength(qr, 'utf8') <= 1200)
+  assert.ok(qr.endsWith('…'))
+  assert.ok(!qr.includes('\uFFFD'))
 })

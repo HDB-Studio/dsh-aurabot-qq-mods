@@ -1,6 +1,10 @@
 // 自检页：比 Windows 驱动自带测试页更全，用来核对排版、字体、对齐和打印头。
 import { wrapText, displayWidth } from './layout.mjs'
 import { formatDate } from './templates.mjs'
+import { clipQrText, qrCapacityForDots } from './qr.mjs'
+
+// 二维码塞得下的上限：太多字会让模块小到扫不出来，超出的部分截断加省略号。
+const QR_MAX_BYTES = 1200
 
 /** 0-9 循环，正好铺满 columns 列，用来量宽度。 */
 export function rulerLine(columns) {
@@ -71,6 +75,46 @@ export function testPattern(dots, height = 48) {
     set(width - 1, y)
   }
   return { width, height: rows, data }
+}
+
+/**
+ * 自检页二维码：把这台机器这次自检的全部信息写进去（设备、系统、打印机、驱动、端口、时间），
+ * 手机扫一下就能看到完整质检结果，不用逐行抄纸。
+ */
+export function buildSelfTestQr({
+  printer = {},
+  paper = {},
+  settings = {},
+  transportLabel = '',
+  version = '',
+  now = new Date(),
+  extraInfo = [],
+} = {}) {
+  const columns = Math.max(8, Math.min(96, Math.floor(paper.columns) || 32))
+  const paperMm = Number(paper.paperMm) || 58
+  const effectiveMm = Number(paper.effectiveMm) || 48
+  const dots = Number(paper.dots) || effectiveMm * 8
+  const stamp = formatDate(now)
+  const lines = [
+    `AURABOT 热敏打印 自检 v${version || '-'}`,
+    `打印机：${printer.name || '未命名'}`,
+    `通道：${transportLabel || printer.transport || '未知'}`,
+    `目标：${printer.transport === 'preview' ? '不实际出纸' : (printer.target || '未填')}`,
+    `纸宽：${paperMm}mm · 有效 ${effectiveMm}mm · ${columns} 列`,
+    `编码：${printer.encoding || settings.encoding || 'gbk'} · 切纸：${printer.cut || settings.cut || 'partial'} · 抖动：${settings.imageDither === false ? '关' : '开'}`,
+    `时间：${stamp.datetime} ${stamp.weekday}`,
+  ]
+  for (const section of extraInfo) {
+    if (!section?.rows?.length) continue
+    lines.push(`[${section.title}]`)
+    for (const [key, value] of section.rows) {
+      const text = String(value ?? '').replace(/\s+/g, ' ').trim()
+      if (text) lines.push(`${key}：${text}`)
+    }
+  }
+  // 再长就扫不清了：先按纸宽点数算能塞多少，再用硬上限兜底
+  const maxBytes = Math.max(200, Math.min(QR_MAX_BYTES, qrCapacityForDots(dots, 2)))
+  return clipQrText(lines.join('\n'), maxBytes)
 }
 
 /**
@@ -181,7 +225,7 @@ export function buildSelfTestPage({
   return {
     lines,
     images: [testPattern(dots)],
-    qr: `AURABOT receipt-print ${version} ${printer.name || ''}`.trim(),
+    qr: buildSelfTestQr({ printer, paper, settings, transportLabel, version, now, extraInfo }),
     columns,
     dots,
   }
