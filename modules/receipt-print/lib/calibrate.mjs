@@ -11,7 +11,7 @@ export function mmColumns(mm) {
   return Math.floor((Number(mm) * dotsPerMm) / 12)
 }
 
-// 每行都是「48mm ###...]」的形式：毫米数在最前面，末尾的 ] 在同一行说明没超宽。
+// 每行都是「48mm###...]」的形式：毫米数贴着最前面，末尾的 ] 在同一行说明没超宽。
 // 数字放前面便于直接读数，末尾的方括号用来判断这一行有没有被截断或换行。
 export function calibrationCandidates(paperWidthMm) {
   const paper = clamp(Math.round(Number(paperWidthMm) || 58), 20, 120)
@@ -19,9 +19,9 @@ export function calibrationCandidates(paperWidthMm) {
   for (let mm = paper - 2; mm >= 30; mm -= 2) {
     const columns = mmColumns(mm)
     const label = `${mm}mm`
-    const barLength = columns - label.length - 2
+    const barLength = columns - label.length - 1
     if (barLength < 4) continue
-    rows.push({ mm, text: `${label} ${'#'.repeat(barLength)}]` })
+    rows.push({ mm, text: `${label}${'#'.repeat(barLength)}]` })
   }
   return rows
 }
