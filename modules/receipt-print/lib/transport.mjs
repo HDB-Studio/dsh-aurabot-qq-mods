@@ -247,7 +247,7 @@ public static class AuraRawPrinter {
 }
 '@
 if (-not [AuraRawPrinter]::Send($PrinterName, $FilePath)) {
-  throw ("写打印机失败：" + $PrinterName)
+  throw ("WritePrinter failed: " + $PrinterName)
 }
 `
 
@@ -295,6 +295,10 @@ async function windowsSend(printer, bytes, timeoutMs, { dataDir, spawnImpl, plat
     // 有些机器只装了 PowerShell 7
     if (!result.ok && /ENOENT|not found|找不到/i.test(result.error || '')) {
       result = await spawnPowershell('pwsh', args, timeoutMs, spawnImpl)
+    }
+    // 脚本里只留 ASCII，报错信息在这里翻回中文，避免中文 Windows 的代码页把脚本解析坏
+    if (!result.ok && /WritePrinter failed/i.test(result.error || '')) {
+      result = { ok: false, error: `写打印机失败：${printer.target}` }
     }
     return result
   } finally {
