@@ -51,6 +51,25 @@ test('二维码指令', () => {
   assert.ok(bytes.includes(Buffer.from('https://example.com', 'utf8')))
 })
 
+test('每张小票末尾空一行，再打一行按 columns 铺满的等号', () => {
+  const bytes = buildReceiptBytes([{ text: '正文' }], { encoding: 'utf8', columns: 32 })
+  assert.ok(bytes.includes(Buffer.from(`\n${'='.repeat(32)}\n`, 'utf8')))
+  const tail = bytes.subarray(Math.max(0, bytes.length - 80)).toString('utf8')
+  assert.ok(tail.includes('='.repeat(32)))
+  assert.ok(bytes.indexOf(Buffer.from('='.repeat(32), 'utf8')) < bytes.indexOf(Buffer.from([0x1b, 0x64])), '等号要在走纸之前')
+})
+
+test('等号分隔线跟随有效宽度换算出的列数（80mm → 48 列）', () => {
+  const bytes = buildReceiptBytes([{ text: '正文' }], { encoding: 'utf8', columns: 48 })
+  assert.ok(bytes.includes(Buffer.from('='.repeat(48), 'utf8')))
+  assert.ok(!bytes.includes(Buffer.from('='.repeat(49), 'utf8')))
+})
+
+test('可以关掉末尾的等号分隔线', () => {
+  const bytes = buildReceiptBytes([{ text: '正文' }], { encoding: 'utf8', columns: 32, endSeparator: false })
+  assert.ok(!bytes.includes(Buffer.from('='.repeat(32), 'utf8')))
+})
+
 test('样式指令：居中/右对齐/加粗/倍高/倍宽倍高', () => {
   const center = buildReceiptBytes([{ text: 'C', style: 'center' }], { encoding: 'utf8' })
   assert.ok(center.includes(Buffer.from([0x1b, 0x61, 0x01])))

@@ -185,6 +185,21 @@ test('纸宽 mm 会换算成每行列数', async () => {
   assert.equal(narrow.columns, 26)
 })
 
+test('打印机沿用「设置」里的有效打印宽度，旧打印机配置不会顶掉新设置', async () => {
+  const { routes, settings } = await boot()
+  settings.printer = { name: 'POS-58', transport: 'preview', paperWidthMm: 58, effectiveWidthMm: 48 }
+  settings.effectiveWidthMm = 40
+  const res = await routes.get('/preview')(bodyReq({ text: '测试' }))
+  assert.equal(res.effectiveWidthMm, 40)
+  assert.equal(res.columns, 26)
+
+  // 设置改回 0（自动）时，打印机上的旧值也要失效
+  settings.effectiveWidthMm = 0
+  const auto = await routes.get('/preview')(bodyReq({ text: '测试' }))
+  assert.equal(auto.effectiveWidthMm, 48)
+  assert.equal(auto.columns, 32)
+})
+
 test('/打印机 显示单台打印机和列数', async () => {
   const { commands, settings } = await boot()
   settings.printer = { name: 'POS-80', transport: 'preview', paperWidthMm: 80 }

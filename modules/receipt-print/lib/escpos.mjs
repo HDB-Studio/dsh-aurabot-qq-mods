@@ -66,6 +66,7 @@ export function buildReceiptBytes(lines, options = {}) {
     columns,
     width = 32,
     images = [],
+    endSeparator = true,
   } = options
   const cols = Math.max(8, Math.min(96, Math.floor(Number(columns ?? width)) || 32))
   const encode = encoder(encoding)
@@ -121,6 +122,13 @@ export function buildReceiptBytes(lines, options = {}) {
     for (const chunk of qrCommands(qr, cols * 12)) chunks.push(chunk)
     chunks.push(Buffer.from('\n', 'utf8'))
     chunks.push(Buffer.from([ESC, 0x61, 0x00]))
+  }
+
+  // 每张小票末尾留一行空行，再打一行按有效打印宽度铺满的等号，方便撕纸对齐。
+  if (endSeparator !== false) {
+    chunks.push(Buffer.from('\n', 'utf8'))
+    chunks.push(encode('='.repeat(cols)))
+    chunks.push(Buffer.from('\n', 'utf8'))
   }
 
   chunks.push(Buffer.from([ESC, 0x64, Math.max(0, Math.min(255, Number(feed) || 0))])) // ESC d n 走纸

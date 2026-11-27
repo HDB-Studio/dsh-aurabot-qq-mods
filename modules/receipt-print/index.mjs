@@ -19,7 +19,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.20.0'
+const VERSION = '0.21.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -168,7 +168,11 @@ function normalizeSettings(raw = {}) {
     ? settings.printer
     : (Array.isArray(settings.printers) ? settings.printers.find((p) => p && typeof p === 'object') : null)
   const printer = rawPrinter
-    ? normalizePrinter(rawPrinter, {
+    ? normalizePrinter({
+      ...rawPrinter,
+      // 有效宽度以「设置」页为准，避免旧打印机配置把新设置顶掉
+      effectiveWidthMm: effectiveRaw,
+    }, {
       paperWidthMm: paper.paperMm,
       effectiveWidthMm: effectiveRaw > 0 ? effectiveRaw : 0,
       encoding: settings.encoding,
