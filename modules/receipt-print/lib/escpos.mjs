@@ -84,14 +84,29 @@ export function buildReceiptBytes(lines, options = {}) {
       chunks.push(Buffer.from('\n', 'utf8'))
       continue
     }
+    if (style === 'barcode') {
+      // CODE128：GS k 73 n {B 数据，条码内容只放半角字符
+      const payload = Buffer.from(`{B${text}`, 'ascii')
+      chunks.push(Buffer.from([ESC, 0x61, 0x01]))
+      chunks.push(Buffer.from([GS, 0x6b, 0x49, payload.length & 0xff]))
+      chunks.push(payload)
+      chunks.push(Buffer.from('\n', 'utf8'))
+      chunks.push(Buffer.from([ESC, 0x61, 0x00]))
+      continue
+    }
     if (style === 'center' || style === 'title') chunks.push(Buffer.from([ESC, 0x61, 0x01])) // 居中
     else if (style === 'right') chunks.push(Buffer.from([ESC, 0x61, 0x02])) // 右对齐
     if (style === 'title' || style === 'large') chunks.push(Buffer.from([GS, 0x21, 0x11])) // 倍宽倍高
     else if (style === 'big') chunks.push(Buffer.from([GS, 0x21, 0x01])) // 倍高
+    else if (style === 'wide') chunks.push(Buffer.from([GS, 0x21, 0x10])) // 倍宽
     if (style === 'bold' || style === 'title') chunks.push(Buffer.from([ESC, 0x45, 0x01])) // 加粗
+    if (style === 'underline') chunks.push(Buffer.from([ESC, 0x2d, 0x01])) // 下划线
+    if (style === 'invert') chunks.push(Buffer.from([GS, 0x42, 0x01])) // 反白
     chunks.push(encode(text))
-    if (style === 'title' || style === 'large' || style === 'big') chunks.push(Buffer.from([GS, 0x21, 0x00]))
+    if (style === 'title' || style === 'large' || style === 'big' || style === 'wide') chunks.push(Buffer.from([GS, 0x21, 0x00]))
     if (style === 'bold' || style === 'title') chunks.push(Buffer.from([ESC, 0x45, 0x00]))
+    if (style === 'underline') chunks.push(Buffer.from([ESC, 0x2d, 0x00]))
+    if (style === 'invert') chunks.push(Buffer.from([GS, 0x42, 0x00]))
     if (style === 'center' || style === 'right' || style === 'title') chunks.push(Buffer.from([ESC, 0x61, 0x00]))
     chunks.push(Buffer.from('\n', 'utf8'))
   }

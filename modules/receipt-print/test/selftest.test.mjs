@@ -34,11 +34,29 @@ test('自检页：设备信息带打印机名、版本和时间', () => {
 test('自检页：对齐、字号、字符、刻度都在，且有居中/右对齐样式', () => {
   const built = page()
   const styles = new Set(built.lines.map((l) => l.style))
-  for (const style of ['title', 'center', 'right', 'bold', 'big', 'large', 'sep']) assert.ok(styles.has(style), `缺少样式 ${style}`)
+  for (const style of ['title', 'center', 'right', 'bold', 'big', 'large', 'wide', 'underline', 'invert', 'barcode', 'sep']) {
+    assert.ok(styles.has(style), `缺少样式 ${style}`)
+  }
   const text = built.lines.map((l) => l.text).join('\n')
   assert.match(text, /中文：热敏打印中文正常/)
   assert.match(text, /打印头测试图/)
   assert.ok(built.lines.some((l) => l.text === rulerLine(built.columns)))
+})
+
+test('自检页：新增的版式、字符、金额、线条、表格、条码段都在', () => {
+  const built = page()
+  const text = built.lines.map((l) => l.text).join('\n')
+  for (const title of ['字号与效果', '缩进与版式', '字符测试', '数字与金额', '线条样式', '表格示例', '条码测试', '走纸与切纸']) {
+    assert.match(text, new RegExp(title))
+  }
+  assert.match(text, /ASCII 32-63:/)
+  assert.match(text, /abcdefghijklmnopqrstuvwxyz/)
+  assert.match(text, /生僻字/)
+  assert.match(text, /简体|繁體|繁体/)
+  assert.match(text, /日文/)
+  assert.match(text, /合计 3\.50/)
+  assert.ok(built.lines.some((l) => l.style === 'barcode' && l.text === 'AURABOT-2026'))
+  assert.ok(built.lines.some((l) => l.text === '-'.repeat(built.columns)), '应该有满行虚线')
 })
 
 test('刻度行正好铺满 columns 列', () => {

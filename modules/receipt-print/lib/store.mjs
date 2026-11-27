@@ -159,7 +159,7 @@ function pruneBackups(target) {
 export function openStore(dir) {
   mkdirSync(dir, { recursive: true })
   const file = join(dir, 'state.json')
-  let state = { version: 1, seeded: false, seededSummary: false, seededPresets: false, templates: [], history: [], lastRun: {}, moment: { lastAt: 0 } }
+  let state = { version: 1, seeded: false, seededSummary: false, seededPresets: false, engineSynced: false, templates: [], history: [], lastRun: {}, moment: { lastAt: 0 } }
   if (existsSync(file)) {
     try {
       const loaded = JSON.parse(readFileSync(file, 'utf8'))
@@ -279,6 +279,23 @@ export function openStore(dir) {
       }
       save()
       return created
+    },
+    // 一次性把预设模板的生成方式调到当前推荐值；只动提示词没被改过的预设，改过的不碰。
+    syncPresetEngines(presets = []) {
+      if (state.engineSynced) return []
+      state.engineSynced = true
+      const changed = []
+      for (const preset of presets) {
+        if (!preset?.name || !preset?.engine) continue
+        const current = state.templates.find((t) => t.name === preset.name)
+        if (!current) continue
+        if (String(current.prompt).trim() !== String(preset.prompt || '').trim()) continue
+        if (current.engine === preset.engine) continue
+        this.saveTemplate({ ...current, engine: preset.engine })
+        changed.push(current.name)
+      }
+      save()
+      return changed
     },
   }
 }

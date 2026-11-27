@@ -81,6 +81,25 @@ test('额外预设只补一次：同名跳过，删掉不复活', async () => {
   assert.equal(again.get('晨间计划'), null)
 })
 
+test('预设生成方式只同步一次，且不动改过提示词的模板', async () => {
+  const dir = await tempDir()
+  const store = openStore(dir)
+  store.saveTemplate({ name: '每日简报', prompt: '固定提示词', engine: 'think' })
+  store.saveTemplate({ name: '今日总结', prompt: '我自己改过的', engine: 'ask' })
+  const changed = store.syncPresetEngines([
+    { name: '每日简报', prompt: '固定提示词', engine: 'ask' },
+    { name: '今日总结', prompt: '原始提示词', engine: 'think' },
+  ])
+  assert.deepEqual(changed, ['每日简报'])
+  assert.equal(store.get('每日简报').engine, 'ask')
+  assert.equal(store.get('今日总结').engine, 'ask', '提示词被改过就不碰')
+
+  store.saveTemplate({ ...store.get('每日简报'), engine: 'think' })
+  const reopened = openStore(dir)
+  assert.deepEqual(reopened.syncPresetEngines([{ name: '每日简报', prompt: '固定提示词', engine: 'ask' }]), [])
+  assert.equal(reopened.get('每日简报').engine, 'think', '同步只做一次，之后尊重用户选择')
+})
+
 test('按名字或 id 取模板，保存和删除', async () => {
   const store = openStore(await tempDir())
   const t = store.saveTemplate({ name: '日报', prompt: '写日报', schedule: { enabled: true, time: '08:30', days: [1, 3] } })

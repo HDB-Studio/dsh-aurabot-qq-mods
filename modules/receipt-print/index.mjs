@@ -19,7 +19,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.19.0'
+const VERSION = '0.20.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -87,7 +87,7 @@ const SEED_SUMMARY = {
   name: '今日总结',
   prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的今日总结：今天发生了什么、做完了什么、还有什么没做完、明天最要紧的一件事。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
   system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-  engine: 'ask',
+  engine: 'think',
   trigger: 'schedule',
   schedule: { enabled: true, time: '18:00', days: [] },
   footer: '{date}',
@@ -99,7 +99,7 @@ const PRESET_TEMPLATES = [
     name: '晨间计划',
     prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的晨间计划：三件今天最重要的事，每件一行、前面加序号；两件顺手就能做完的小事，每件前面加 [ ]；最后写一句给自己的提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-    engine: 'ask',
+    engine: 'think',
     trigger: 'schedule',
     schedule: { enabled: true, time: '07:30', days: [] },
     footer: '{date}',
@@ -117,7 +117,7 @@ const PRESET_TEMPLATES = [
     name: '本周回顾',
     prompt: '今天是 {date} {weekday}。请写一份本周回顾：这周完成的 3 件事、一个明显的进步、一件没做好的事、下周最想改变的一件事，每项一行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-    engine: 'ask',
+    engine: 'think',
     trigger: 'schedule',
     schedule: { enabled: true, time: '20:00', days: [0] },
     footer: '{date}',
@@ -126,7 +126,7 @@ const PRESET_TEMPLATES = [
     name: '睡前一句',
     prompt: '现在是 {time}。请写一张适合睡前看的小纸条：一句温柔的晚安，一句今天值得记住的小事，一句明天的小期待，总共不超过四行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-    engine: 'ask',
+    engine: 'think',
     trigger: 'schedule',
     schedule: { enabled: true, time: '22:30', days: [] },
     footer: '{date}',
@@ -135,7 +135,7 @@ const PRESET_TEMPLATES = [
     name: '灵感便签',
     prompt: '请给一个今天就能动手的小创意：先写一句点子，再写需要准备的两样东西，最后写第一步怎么做。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-    engine: 'ask',
+    engine: 'think',
     trigger: 'model',
     schedule: { enabled: false, time: '09:00', days: [] },
     footer: '{date}',
@@ -144,7 +144,7 @@ const PRESET_TEMPLATES = [
     name: '说说随想',
     prompt: '她刚发了一条空间说说：「{moment}」。请写一张适合贴在后面的小纸条：一句懂她的小感想，再加一句给明天的她。不要复述原话，只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
-    engine: 'ask',
+    engine: 'think',
     trigger: 'moment',
     schedule: { enabled: false, time: '21:00', days: [] },
     footer: '{date}',
@@ -290,6 +290,7 @@ export default {
     if (store.templates().length === 0) store.seed(SEED_TEMPLATE)
     store.seedSummary(SEED_SUMMARY)
     store.seedPresets(PRESET_TEMPLATES)
+    store.syncPresetEngines([SEED_TEMPLATE, SEED_SUMMARY, ...PRESET_TEMPLATES])
 
     const settingsNow = () => normalizeSettings(api.settings())
 

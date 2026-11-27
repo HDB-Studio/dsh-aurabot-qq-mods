@@ -49,7 +49,7 @@ export function boxLines(columns, text = '') {
  * 打印头测试图：横向 1 点竖条查断针，灰阶查浓度，竖条查进纸，实心块查发热。
  * 宽度就是有效宽度的点数，超一点都会切边。
  */
-export function testPattern(dots, height = 48) {
+export function testPattern(dots, height = 72) {
   const width = Math.max(32, Math.min(576, Math.round(Number(dots) || 384)))
   const rows = Math.max(24, Math.floor(height))
   const bytesPerRow = Math.ceil(width / 8)
@@ -58,13 +58,16 @@ export function testPattern(dots, height = 48) {
     if (x < 0 || x >= width || y < 0 || y >= rows) return
     data[y * bytesPerRow + (x >> 3)] |= 0x80 >> (x & 7)
   }
+  const bands = 6
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < width; x++) {
-      const band = Math.floor((y / rows) * 4)
+      const band = Math.floor((y / rows) * bands)
       let on = false
       if (band === 0) on = x % 2 === 0 // 1 点竖条：断针会留下白缝
-      else if (band === 1) on = (x * 8) / width > (y - rows / 4) / (rows / 4) // 斜向灰阶
-      else if (band === 2) on = Math.floor(x / 8) % 2 === 0 // 8 点竖条
+      else if (band === 1) on = x % 4 < 2 // 2 点竖条
+      else if (band === 2) on = (x * 8) / width > (y - rows / 3) / (rows / 3) // 斜向灰阶
+      else if (band === 3) on = Math.floor(x / 8) % 2 === 0 // 8 点竖条
+      else if (band === 4) on = (x + y) % 2 === 0 // 棋盘格：看小点和浓度
       else on = x > width * 0.05 && x < width * 0.95 // 实心块，留一点白边
       if (on) set(x, y)
     }
@@ -214,21 +217,66 @@ export function buildSelfTestPage({
   push('normal', '两段都居中/贴右说明正常；只有第二段对，说明打印机忽略对齐指令，按空格为准。')
   sep()
 
-  push('bold', '字号测试')
+  push('bold', '字号与效果')
   push('normal', '常规 normal ABC abc 0123456789')
   push('big', '倍高 ABC')
   push('large', '倍宽倍高 A1')
+  push('wide', '倍宽 A1')
   push('bold', '加粗 bold A1')
+  push('underline', '下划线 underline')
+  push('invert', '反白 invert')
+  sep()
+
+  push('bold', '缩进与版式')
+  pushExact('normal', `${' '.repeat(4)}缩进四格 indent`)
+  push('center', '居中版式 CENTER')
+  push('right', '右对齐版式 RIGHT')
+  push('normal', '左对齐 LEFT')
   sep()
 
   push('bold', '字符测试')
   push('normal', '中文：热敏打印中文正常')
-  push('normal', '标点：，。！？；：（）《》“”')
+  push('normal', '标点：，。！？；：（）《》“”‘’…—')
   push('normal', '混排：中文 + English + 123')
   push('normal', '长行要按纸宽折行，不能溢出。')
-  push('normal', 'ASCII: !"#$%&\'()*+,-./')
-  push('normal', '0123456789:;<=>?@')
-  push('normal', 'ABCZ[\\]^_`abcz{|}~')
+  push('normal', 'ASCII 32-63:')
+  push('normal', ' !"#$%&\'()*+,-./0123456789:;<=>?')
+  push('normal', 'ASCII 64-95:')
+  push('normal', '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_')
+  push('normal', 'ASCII 96-126:')
+  push('normal', '`abcdefghijklmnopqrstuvwxyz{|}~')
+  push('normal', '全角：ＡＢＣ１２３！？，。')
+  push('normal', '生僻字：镕 喆 骉 犇 燚 淼')
+  push('normal', '繁体：熱敏打印測試 龍 鳳')
+  push('normal', '日文：こんにちは カタカナ')
+  sep()
+
+  push('bold', '数字与金额')
+  push('normal', '0123456789 0000 1111 2222')
+  push('normal', '金额：¥123.45 / $67.89 / 100%')
+  push('normal', '日期：2026-11-27 12:34:56')
+  push('normal', '电话：138-0000-0000')
+  sep()
+
+  push('bold', '线条样式')
+  push('normal', '-'.repeat(columns))
+  push('normal', '='.repeat(columns))
+  push('normal', '.'.repeat(columns))
+  push('normal', '·'.repeat(columns))
+  push('normal', '~'.repeat(columns))
+  sep()
+
+  push('bold', '表格示例')
+  push('normal', '项目        数量   金额')
+  push('normal', '热敏纸      1      3.50')
+  push('normal', '清洁笔      1      0.00')
+  push('normal', '-'.repeat(Math.max(8, Math.floor(columns / 2))))
+  push('right', '合计 3.50')
+  sep()
+
+  push('bold', '条码测试')
+  push('normal', 'CODE128（打印机不支持时会空白）：')
+  lines.push({ text: 'AURABOT-2026', style: 'barcode' })
   sep()
 
   push('bold', '宽度刻度')
@@ -239,7 +287,10 @@ export function buildSelfTestPage({
   sep()
 
   push('bold', '打印头测试图')
-  push('normal', `下方 ${dots} 点宽：竖条看断针，灰阶看浓度，实心块看发热。`)
+  push('normal', `下方 ${dots} 点宽 6 段：1 点/2 点/8 点竖条、斜灰阶、棋盘、实心块，最左最右各一条 1 点竖线。`)
+
+  push('bold', '走纸与切纸')
+  push('normal', '下面走纸 4 行，再按设置半切 / 全切 / 不切。')
 
   lines.push({ text: '', style: 'normal' })
   lines.push({ text: '-'.repeat(columns), style: 'sep' })

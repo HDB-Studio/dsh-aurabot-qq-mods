@@ -11,6 +11,9 @@ test('基本信息：用户名、计算机名、操作系统都在', () => {
   assert.match(rows.get('操作系统'), /Windows|macOS|Linux/)
   assert.equal(rows.get('插件版本'), '0.13.0')
   assert.equal(rows.get('Node'), '22.0.0')
+  assert.ok(rows.get('CPU'), '应该有 CPU 型号')
+  assert.ok(rows.get('时区'))
+  assert.ok(rows.get('用户目录'))
 })
 
 test('运行时长格式化', () => {
@@ -57,6 +60,41 @@ test('Windows 详情：打印机、驱动、端口字段都解析出来', async 
   assert.equal(driver.get('依赖文件'), '2 个')
   assert.equal(details.port.length, 1, '空字段要被过滤')
   assert.equal(new Map(details.port).get('端口描述'), 'USB 虚拟打印机端口')
+})
+
+test('Windows 详情：新增的队列、优先级、端口监视器等字段', async () => {
+  const payload = {
+    PrinterName: 'DL',
+    Model: 'M',
+    PortName: 'USB001',
+    Type: 4,
+    Published: false,
+    WorkOffline: false,
+    KeepPrintedJobs: false,
+    Priority: 1,
+    DefaultJobPriority: 0,
+    StartTime: { Hour: 0, Minute: 0 },
+    UntilTime: { Hour: 23, Minute: 59 },
+    JobCount: 2,
+    PagesPerMinute: 0,
+    Renderer: 'winprint',
+    Attributes: 'Local',
+    AllowUserManagement: false,
+    PortMonitor: 'USB Monitor',
+    SNMPEnabled: false,
+    LprQueueName: '',
+    PortUrl: '',
+    DependentFiles: [],
+  }
+  const details = await windowsDetails('DL', { run: fakeRun(payload), platform: 'win32' })
+  const printer = new Map(details.printer)
+  assert.equal(printer.get('类型'), '4')
+  assert.equal(printer.get('脱机'), '否')
+  assert.equal(printer.get('优先级'), '1')
+  assert.equal(printer.get('可用开始'), '00:00')
+  assert.equal(printer.get('可用结束'), '23:59')
+  assert.equal(printer.get('队列作业数'), '2')
+  assert.equal(new Map(details.port).get('端口监视器'), 'USB Monitor')
 })
 
 test('Windows 详情：非 Windows 或读不到就返回 null', async () => {
