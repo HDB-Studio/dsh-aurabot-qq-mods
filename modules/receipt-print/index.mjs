@@ -15,7 +15,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.10.3'
+const VERSION = '0.10.4'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {

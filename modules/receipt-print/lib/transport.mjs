@@ -255,6 +255,13 @@ export function windowsArgs(scriptPath, printerName, filePath) {
   return ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-PrinterName', printerName, '-FilePath', filePath]
 }
 
+// Windows 首次打印要用 Add-Type 现编译 C# 辅助类，冷启动 8 秒经常不够，给足 30 秒
+export const WINDOWS_TIMEOUT_MS = 30000
+
+function formatTimeout(ms) {
+  return ms >= 1000 ? `${Math.round(ms / 1000)} 秒` : `${ms}ms`
+}
+
 async function spawnPowershell(command, args, timeoutMs, spawnImpl) {
   return new Promise((resolve) => {
     let child
@@ -273,7 +280,7 @@ async function spawnPowershell(command, args, timeoutMs, spawnImpl) {
     }
     const timer = setTimeout(() => {
       try { child.kill() } catch { /* 已经退出 */ }
-      finish({ ok: false, error: '调用 PowerShell 超时' })
+      finish({ ok: false, error: `调用 PowerShell 超时（${formatTimeout(timeoutMs)}）` })
     }, timeoutMs)
     child.stderr?.on('data', (chunk) => { stderr += chunk })
     child.on('error', (error) => finish({ ok: false, error: error.message }))
@@ -311,7 +318,7 @@ async function windowsSend(printer, bytes, timeoutMs, { dataDir, spawnImpl, plat
  * 测试时可以注入 connectImpl / spawnImpl / platform。
  */
 export async function sendBytes(printer, bytes, options = {}) {
-  const timeoutMs = Number(options.timeoutMs || 8000)
+  const timeoutMs = Number(options.timeoutMs || (printer.transport === 'windows' ? WINDOWS_TIMEOUT_MS : 8000))
   const connectImpl = options.connectImpl || connect
   const spawnImpl = options.spawnImpl || spawn
   const platform = options.platform || process.platform

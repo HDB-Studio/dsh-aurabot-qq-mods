@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:net'
 import { EventEmitter } from 'node:events'
-import { normalizePrinter, parseTcpTarget, windowsArgs, sendBytes, WINDOWS_SCRIPT, queryStatus, statusQueryBytes } from '../lib/transport.mjs'
+import { normalizePrinter, parseTcpTarget, windowsArgs, sendBytes, WINDOWS_SCRIPT, WINDOWS_TIMEOUT_MS, queryStatus, statusQueryBytes } from '../lib/transport.mjs'
 
 function fakeSpawn(captured) {
   return (command, args, options) => {
@@ -148,6 +148,22 @@ test('Windows：脚本 ASCII 化后仍能把失败翻成中文提示', async () 
   const result = await sendBytes(printer, Buffer.from('x'), { platform: 'win32', dataDir: dir, spawnImpl: spawnFail })
   assert.equal(result.ok, false)
   assert.match(result.error, /写打印机失败：DL/)
+})
+
+test('Windows：默认超时 30 秒，显式超时会报出时长', async () => {
+  assert.equal(WINDOWS_TIMEOUT_MS, 30000, 'Add-Type 冷编译经常超过 8 秒')
+  const dir = await mkdtemp(join(tmpdir(), 'receipt-win-'))
+  const printer = normalizePrinter({ name: 'usb', transport: 'windows', target: 'DL' })
+  const hang = () => {
+    const child = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.kill = () => {}
+    child.stdin = { end() {} }
+    return child
+  }
+  const result = await sendBytes(printer, Buffer.from('x'), { platform: 'win32', dataDir: dir, spawnImpl: hang, timeoutMs: 20 })
+  assert.equal(result.ok, false)
+  assert.match(result.error, /调用 PowerShell 超时（20ms）/)
 })
 
 test('Windows：非 Windows 平台直接拒绝', async () => {
