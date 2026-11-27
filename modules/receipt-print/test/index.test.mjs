@@ -20,7 +20,9 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
   const commands = new Map()
   const routes = new Map()
   const ticks = new Map()
+  const handlers = new Map()
   const sent = []
+  const replies = []
   const api = {
     id: 'receipt-print',
     settings: () => ({ ...settings }),
@@ -29,6 +31,9 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
     command: (def) => commands.set(def.name, def),
     route: (path, fn) => routes.set(path, fn),
     every: (ms, fn, name) => ticks.set(name || String(ms), fn),
+    on: (name, fn) => handlers.set(name, fn),
+    isOwner: (id) => String(id) === '1',
+    reply: async (msg, text) => { replies.push({ chatId: msg.chatId, text }) },
     use: (id) => (id === 'diary' ? diary : null),
     config: () => config || {},
     sendText: async (target, text) => {
@@ -40,7 +45,7 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
     think: async () => '想好了，今天适合打印小票。',
   }
   const exports = mod.setup(api)
-  return { dir, settings, commands, routes, ticks, exports, sent }
+  return { dir, settings, commands, routes, ticks, handlers, exports, sent, replies }
 }
 
 test('启动后自动种下「每日简报」和「今日总结」', async () => {
@@ -424,4 +429,46 @@ test('旧版本的协议确认会失效', async () => {
   settings.printer = { name: '预览机', transport: 'preview', paperWidthMm: 58 }
 
   assert.match(await commands.get('小票').run('每日简报'), /同意/)
+})
+
+test('消息打印：主人私聊发文字就出纸并回复', async () => {
+  const { handlers, settings, routes, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '今天吃什么' })
+  assert.match(replies.at(-1).text, /已发送到「预览机」/)
+  const entry = routes.get('/history')().history[0]
+  assert.equal(entry.template, '消息打印')
+  assert.match(entry.trigger.reason, /消息文字/)
+})
+
+test('消息打印：陌生人默认不打印', async () => {
+  const { handlers, settings, routes, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '2', text: '给我打一张' })
+  assert.equal(replies.length, 0)
+  assert.equal(routes.get('/history')().history.length, 0)
+})
+
+test('消息打印：群里没 @ 不打，@ 了才打', async () => {
+  const { handlers, settings, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'group', userId: '1', text: '随便聊聊' })
+  assert.equal(replies.length, 0)
+  await handlers.get('message')({ kind: 'group', userId: '1', text: '打这个', mentioned: true })
+  assert.match(replies.at(-1).text, /已发送到「预览机」/)
+})
+
+test('消息打印：/ 开头交给命令系统，不重复打印', async () => {
+  const { handlers, settings, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '/打印 你好' })
+  assert.equal(replies.length, 0)
+})
+
+test('消息打印：关掉后完全不响应', async () => {
+  const { handlers, settings, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  settings.printRequests = 'off'
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '打印我' })
+  assert.equal(replies.length, 0)
 })

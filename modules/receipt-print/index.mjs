@@ -10,12 +10,13 @@ import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
 import { pickNewMoments, extractImageSources, timeOf, describeMoments } from './lib/moments.mjs'
+import { messageText, messageImages, firstUrl, htmlToText, clipText } from './lib/requests.mjs'
 import { readFile } from 'node:fs/promises'
 import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.10.8'
+const VERSION = '0.11.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -62,6 +63,8 @@ const DEFAULTS = {
   imageContrast: 0,
   imageGamma: 1.3,
   imageSharpen: true,
+  printRequests: 'owner',
+  requestMaxChars: 1200,
 }
 
 const SEED_TEMPLATE = {
@@ -142,6 +145,8 @@ function normalizeSettings(raw = {}) {
     imageContrast: Math.max(-100, Math.min(100, Math.round(Number(settings.imageContrast) || 0))),
     imageGamma: Math.max(0.5, Math.min(2.5, Number(settings.imageGamma) || DEFAULTS.imageGamma)),
     imageSharpen: settings.imageSharpen !== false,
+    printRequests: ['off', 'owner', 'all'].includes(settings.printRequests) ? settings.printRequests : DEFAULTS.printRequests,
+    requestMaxChars: Math.max(100, Math.min(4000, Number(settings.requestMaxChars) || DEFAULTS.requestMaxChars)),
   }
 }
 
@@ -197,6 +202,8 @@ export default {
     { key: 'momentIncludeSelf', label: '连仅自己可见的也说打印', type: 'switch', hint: '默认只打印公开发布的说说' },
     { key: 'momentImages', label: '打印说说配图', type: 'switch', hint: '图片会按有效纸宽缩放，再转成黑白位图' },
     { key: 'momentMaxImages', label: '每条说说最多打印几张图', type: 'number', min: 0, max: 9, step: 1 },
+    { key: 'printRequests', label: '消息打印', type: 'select', options: [{ value: 'off', label: '关' }, { value: 'owner', label: '只主人' }, { value: 'all', label: '所有人' }], hint: '私聊发文字、图片或链接就打印；群聊要 @ 它才算' },
+    { key: 'requestMaxChars', label: '消息/网页最多打印字数', type: 'number', min: 100, max: 4000, step: 100, hint: '超长会自动截断并标注「后略」' },
     { key: 'imageMaxHeightMm', label: '图片最大高度（mm）', type: 'number', min: 20, max: 200, step: 10, hint: '太高的图会整体缩小，避免一张图打太久' },
     { key: 'imageDither', label: '图片抖动', type: 'switch', hint: '开=照片层次更自然；关=纯黑白阈值，适合文字截图' },
     { key: 'imageAutoLevel', label: '自动调色（色阶）', type: 'switch', hint: '自动拉开明暗，避免整张灰蒙蒙或糊成黑块' },
@@ -601,6 +608,137 @@ export default {
       return lines.join('\n')
     }
 
+    // ---------- 消息打印：私聊发文字/图片/链接就出纸，群里要 @ 它 ----------
+    async function fetchArticle(url, settings) {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(15000),
+        headers: { 'user-agent': 'Mozilla/5.0 (compatible; AurabotReceipt/1.0)' },
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const type = String(response.headers.get('content-type') || '')
+      if (type && !/text\/html|text\/plain|application\/xhtml/i.test(type)) throw new Error('这个链接不是网页')
+      const { title, text } = htmlToText(await response.text())
+      if (!text) throw new Error('网页里没抽出正文')
+      const clipped = clipText(`${title ? `${title}\n\n` : ''}${text}`, settings.requestMaxChars)
+      return { title, text: clipped.text }
+    }
+
+    async function buildRequestImages(sources, paper, settings) {
+      const images = []
+      for (const source of sources.slice(0, 9)) {
+        try {
+          const buffer = await loadImageBuffer(source)
+          images.push(imageRaster(buffer, {
+            maxWidthDots: paper.dots,
+            maxHeightDots: Math.round(settings.imageMaxHeightMm * 8),
+            dither: settings.imageDither,
+            autoLevel: settings.imageAutoLevel,
+            brightness: settings.imageBrightness,
+            contrast: settings.imageContrast,
+            gamma: settings.imageGamma,
+            sharpen: settings.imageSharpen,
+          }))
+        } catch (error) {
+          log.warn?.(`消息图片跳过：${error.message}`)
+        }
+      }
+      return images
+    }
+
+    async function printPayload({ title, body, images = [], reason = '消息打印' }) {
+      const settings = settingsNow()
+      const printer = currentPrinter(settings)
+      if (!printer) return { ok: false, message: '还没配置打印机，先去面板里填一台' }
+      const paper = paperFor(settings, printer, null)
+      const { lines, qr } = buildLines({
+        template: { name: title },
+        body,
+        width: paper.columns,
+        paperMm: paper.paperMm,
+        effectiveMm: paper.effectiveMm,
+        showHeader: false,
+        footer: settings.footer,
+        qr: settings.qrText,
+        now: new Date(),
+      })
+      const bytes = buildReceiptBytes(lines, {
+        encoding: printer.encoding || settings.encoding,
+        cut: printer.cut || settings.cut,
+        columns: paper.columns,
+        qr,
+        images,
+        feed: 3,
+      })
+      const result = await sendBytes(printer, bytes, { timeoutMs: settings.timeoutMs, dataDir: api.dataDir() })
+      recordPrint({
+        template: title,
+        printer: printer.name,
+        transport: printer.transport,
+        ok: result.ok === true,
+        error: result.error || '',
+        chars: body.length,
+        images: images.length,
+        text: previewText(lines),
+        trigger: { type: 'command', reason },
+        preview: false,
+      })
+      if (!result.ok) await reportError('消息打印失败', await failureDetail(printer, result.error))
+      return result.ok
+        ? { ok: true, message: `已发送到「${printer.name}」` }
+        : { ok: false, message: `打印失败：${result.error || '未知错误'}` }
+    }
+
+    async function handlePrintRequest(msg) {
+      const settings = settingsNow()
+      if (settings.printRequests === 'off' || settings.enabled === false) return
+      if (!termsAccepted(settings)) return
+      if (!msg || msg.kind === 'system') return
+      if (settings.printRequests === 'owner' && !(api.isOwner?.(msg.userId) ?? false)) return
+      if (msg.kind === 'group' && !msg.mentioned) return
+      const text = messageText(msg)
+      if (/^[/／]/.test(text)) return
+      const sources = []
+      for (const item of messageImages(msg)) {
+        if (typeof item === 'string') { sources.push(item); continue }
+        try {
+          const info = await api.onebot?.('get_image', { file: item.file })
+          if (info?.url) sources.push(String(info.url))
+        } catch (error) {
+          log.warn?.(`取消息图片失败：${error.message}`)
+        }
+      }
+      if (!sources.length && !text) return
+      let title = '消息打印'
+      let body = text
+      let reason = sources.length ? (text ? '消息图片+文字' : '消息图片') : '消息文字'
+      if (!sources.length && firstUrl(text)) {
+        const url = firstUrl(text)
+        try {
+          const article = await fetchArticle(url, settings)
+          title = article.title || '网页打印'
+          body = article.text
+          reason = `网页：${url}`
+        } catch (error) {
+          api.reply?.(msg, `这个链接读不到：${error.message}`)
+          return
+        }
+      }
+      const printer = currentPrinter(settings)
+      if (!printer) {
+        api.reply?.(msg, '还没配置打印机，先去面板里填一台')
+        return
+      }
+      const paper = paperFor(settings, printer, null)
+      const images = sources.length ? await buildRequestImages(sources, paper, settings) : []
+      if (sources.length && !images.length) {
+        api.reply?.(msg, '图片没取到，可能已经过期，再发一次试试')
+        return
+      }
+      const clipped = clipText(body, settings.requestMaxChars)
+      const result = await printPayload({ title, body: clipped.text, images, reason })
+      api.reply?.(msg, clipped.clipped ? `${result.message}（内容太长，已截断）` : result.message)
+    }
+
     function templateLine(template) {
       const schedule = template.schedule?.enabled
         ? ` · ${template.schedule.time}${template.schedule.days?.length ? `（周${template.schedule.days.map((d) => '日一二三四五六'[d]).join('')}）` : ' · 每天'}`
@@ -827,6 +965,10 @@ export default {
         log.warn?.(`说说自动打印出错：${error.message}`)
       }
     }, '说说自动打印')
+
+    // 私聊直接发、群里 @ 它就打；指令以 / 开头，交给上面的命令系统。
+    api.on('message', (msg) => handlePrintRequest(msg)
+      .catch((error) => log.warn?.(`消息打印出错：${error.message}`)))
 
     // ---------- 打印记录与备份 ----------
     function recordTime(at) {
