@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { messageSegments, messageText, messageImages, firstUrl, htmlToText, clipText } from '../lib/requests.mjs'
+import { messageSegments, messageText, messageImages, firstUrl, htmlToText, clipText, parsePrintIntent } from '../lib/requests.mjs'
 
 test('消息分段：数组和 CQ 字符串都能解析', () => {
   assert.equal(messageSegments({ raw: { message: [{ type: 'text', data: { text: 'hi' } }] } }).length, 1)
@@ -51,4 +51,25 @@ test('超长截断：加后略', () => {
   assert.equal(clipped.text.length, 100 + '…（后略）'.length)
   assert.match(clipped.text, /（后略）$/)
   assert.equal(clipText('短的', 100).clipped, false)
+})
+
+test('打印意图：明确说打印才返回正文，指令词去掉', () => {
+  assert.deepEqual(parsePrintIntent('打印 今天开会'), { text: '今天开会' })
+  assert.deepEqual(parsePrintIntent('帮我打印一下：晚上七点吃饭'), { text: '晚上七点吃饭' })
+  assert.deepEqual(parsePrintIntent('打出来 这段话'), { text: '这段话' })
+  assert.deepEqual(parsePrintIntent('把今天的内容打印出来'), { text: '今天的内容' })
+  assert.deepEqual(parsePrintIntent('打印 https://example.com/a'), { text: 'https://example.com/a' })
+})
+
+test('打印意图：指代和空内容当成没有正文，方便只打图片', () => {
+  assert.deepEqual(parsePrintIntent('打印'), { text: '' })
+  assert.deepEqual(parsePrintIntent('打印这张'), { text: '' })
+  assert.deepEqual(parsePrintIntent('打印这张图'), { text: '' })
+  assert.deepEqual(parsePrintIntent('帮我打印这个吧'), { text: '' })
+})
+
+test('打印意图：普通聊天、打印机、否定说法都不算', () => {
+  for (const text of ['今天吃什么', '打印机坏了', '打印纸没了', '别打印', '不要打印这个', '这张图好看', '']) {
+    assert.equal(parsePrintIntent(text), null, text)
+  }
 })

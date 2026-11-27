@@ -13,13 +13,13 @@ import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
 import { pickNewMoments, extractImageSources, timeOf, describeMoments, momentUrl } from './lib/moments.mjs'
-import { messageText, messageImages, firstUrl, htmlToText, clipText } from './lib/requests.mjs'
+import { messageText, messageImages, firstUrl, htmlToText, clipText, parsePrintIntent } from './lib/requests.mjs'
 import { readFile } from 'node:fs/promises'
 import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.15.0'
+const VERSION = '0.16.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -208,7 +208,7 @@ export default {
     { key: 'momentIncludeSelf', label: '连仅自己可见的也说打印', type: 'switch', hint: '默认只打印公开发布的说说' },
     { key: 'momentImages', label: '打印说说配图', type: 'switch', hint: '图片会按有效纸宽缩放，再转成黑白位图' },
     { key: 'momentMaxImages', label: '每条说说最多打印几张图', type: 'number', min: 0, max: 9, step: 1 },
-    { key: 'printRequests', label: '消息打印', type: 'select', options: [{ value: 'off', label: '关' }, { value: 'owner', label: '只主人' }, { value: 'all', label: '所有人' }], hint: '私聊发文字、图片或链接就打印；群聊要 @ 它才算' },
+    { key: 'printRequests', label: '消息打印', type: 'select', options: [{ value: 'off', label: '关' }, { value: 'owner', label: '只主人' }, { value: 'all', label: '所有人' }], hint: '发消息要带「打印」二字才出纸，例如「打印 今天开会」；图片也要带「打印」；群聊还要 @ 它' },
     { key: 'requestMaxChars', label: '消息/网页最多打印字数', type: 'number', min: 100, max: 4000, step: 100, hint: '超长会自动截断并标注「后略」' },
     { key: 'imageMaxHeightMm', label: '图片最大高度（mm）', type: 'number', min: 20, max: 200, step: 10, hint: '太高的图会整体缩小，避免一张图打太久' },
     { key: 'imageDither', label: '图片抖动', type: 'switch', hint: '开=照片层次更自然；关=纯黑白阈值，适合文字截图' },
@@ -701,8 +701,12 @@ export default {
       if (!msg || msg.kind === 'system') return
       if (settings.printRequests === 'owner' && !(api.isOwner?.(msg.userId) ?? false)) return
       if (msg.kind === 'group' && !msg.mentioned) return
-      const text = messageText(msg)
-      if (/^[/／]/.test(text)) return
+      const rawText = messageText(msg)
+      if (/^[/／]/.test(rawText)) return
+      // 只有明确说「打印」才出纸，普通聊天和随手发的图文都不打
+      const intent = parsePrintIntent(rawText)
+      if (!intent) return
+      const text = intent.text
       const sources = []
       for (const item of messageImages(msg)) {
         if (typeof item === 'string') { sources.push(item); continue }
@@ -713,7 +717,10 @@ export default {
           log.warn?.(`取消息图片失败：${error.message}`)
         }
       }
-      if (!sources.length && !text) return
+      if (!sources.length && !text) {
+        api.reply?.(msg, '要打印什么？把内容接在「打印」后面，例如「打印 今天开会」；发图片时也带上「打印」。')
+        return
+      }
       let title = '消息打印'
       let body = text
       let reason = sources.length ? (text ? '消息图片+文字' : '消息图片') : '消息文字'

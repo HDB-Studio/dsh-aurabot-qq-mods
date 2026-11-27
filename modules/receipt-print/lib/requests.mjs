@@ -56,6 +56,52 @@ export function firstUrl(text) {
   return match ? match[0] : ''
 }
 
+// 只有明确说「打印」才出纸：普通聊天、随手发的图片和链接都不碰。
+const PRINT_CALL = [
+  '打印', '打出来', '打下来', '打一份', '打一张', '打一下',
+  '打这个', '打这张', '打这些', '打那些', '打成小票', '打张小票', '打一份小票',
+  '印出来', '印一下', '印一张', '出小票', '出张小票',
+].join('|')
+
+// 「打印机」「打印纸」不是指令
+const PRINT_PREFIX = new RegExp(
+  `^(?:请|麻烦|帮我|帮忙|给我|替我|你)?\\s*(?:把)?\\s*(?:${PRINT_CALL})`
+  + '(?!机|纸|头|设|店|铺|厂|费|量|状态|记录|任务|队列|服务|不了|没|过)'
+  + '\\s*(?:一下|下|一张|一份|一个|个|出来|吧|呗|了|啦)?'
+  + '\\s*[:：,，。.!！~～\\-]*\\s*',
+)
+
+// 「把这段打印出来」把内容放在中间
+const PRINT_WRAP = new RegExp(
+  `^(?:请|麻烦|帮我|帮忙|给我|替我)?\\s*把\\s*([\\s\\S]+?)\\s*(?:打印|打出来|印出来|打成小票)`
+  + '(?!机|纸|头|设)'
+  + '\\s*(?:一下|出来|吧|呗|了|啦)?\\s*[。.!！~～]?\\s*$',
+)
+
+// 去掉指令词后只剩「这个 / 这张图 / 图片」这类指代，就当没正文
+const DEICTIC = /^(?:[这那]?[张段个篇份]?(?:图|图片|照片|附件|文件|链接|网页|文章|内容|东西|文字|小票)?|它|它们|全部|都|一起|以上|以下|谢谢|吧|呗|好的?|可以)(?:吧|呗|了|啦|呀|啊|哈|谢谢)*$/
+
+/**
+ * 识别「特别嘱咐打印」的消息：返回去掉指令词后的正文，没说打印就返回 null。
+ * 例：「打印 今天开会」→ { text: '今天开会' }；「帮我打印这张」+ 图片 → { text: '' }。
+ */
+export function parsePrintIntent(raw) {
+  const source = String(raw || '').trim()
+  if (!source) return null
+  if (/^(?:别|不要|不用|先别|无需|不需要|不想)/.test(source)) return null
+  let rest = ''
+  if (PRINT_PREFIX.test(source)) {
+    rest = source.replace(PRINT_PREFIX, '')
+  } else {
+    const wrapped = source.match(PRINT_WRAP)
+    if (!wrapped) return null
+    rest = wrapped[1]
+  }
+  rest = rest.trim().replace(/[。.!！~～]+$/, '').trim()
+  if (DEICTIC.test(rest)) rest = ''
+  return { text: rest }
+}
+
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
 
 export function decodeEntities(text) {

@@ -431,14 +431,26 @@ test('旧版本的协议确认会失效', async () => {
   assert.match(await commands.get('小票').run('每日简报'), /同意/)
 })
 
-test('消息打印：主人私聊发文字就出纸并回复', async () => {
+test('消息打印：主人明确说打印才出纸，指令词不进正文', async () => {
   const { handlers, settings, routes, replies } = await boot()
   settings.printer = { name: '预览机', transport: 'preview' }
-  await handlers.get('message')({ kind: 'private', userId: '1', text: '今天吃什么' })
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '打印 今天吃什么' })
   assert.match(replies.at(-1).text, /已发送到「预览机」/)
   const entry = routes.get('/history')().history[0]
   assert.equal(entry.template, '消息打印')
   assert.match(entry.trigger.reason, /消息文字/)
+  assert.ok(entry.text.includes('今天吃什么'))
+  assert.ok(!entry.text.includes('打印 今天'))
+})
+
+test('消息打印：普通聊天、随手发的图文都不打', async () => {
+  const { handlers, settings, replies } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  for (const text of ['今天吃什么', '打印机坏了', '这张图好看', '别打印', '不要打印这个']) {
+    await handlers.get('message')({ kind: 'private', userId: '1', text })
+  }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '', raw: { message: '[CQ:image,file=a.jpg,url=https://x/a.png]' } })
+  assert.equal(replies.length, 0)
 })
 
 test('消息打印：陌生人默认不打印', async () => {
@@ -454,8 +466,16 @@ test('消息打印：群里没 @ 不打，@ 了才打', async () => {
   settings.printer = { name: '预览机', transport: 'preview' }
   await handlers.get('message')({ kind: 'group', userId: '1', text: '随便聊聊' })
   assert.equal(replies.length, 0)
-  await handlers.get('message')({ kind: 'group', userId: '1', text: '打这个', mentioned: true })
+  await handlers.get('message')({ kind: 'group', userId: '1', text: '打印 群里的内容', mentioned: true })
   assert.match(replies.at(-1).text, /已发送到「预览机」/)
+})
+
+test('消息打印：只发「打印」没内容时提示怎么用，不出纸', async () => {
+  const { handlers, settings, replies, routes } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '打印' })
+  assert.match(replies.at(-1).text, /要打印什么/)
+  assert.equal(routes.get('/history')().history.length, 0)
 })
 
 test('消息打印：/ 开头交给命令系统，不重复打印', async () => {
