@@ -6,7 +6,7 @@
 
 - fork 自 [`aureth-labs/dsh-aurabot-qq-mods`](https://github.com/aureth-labs/dsh-aurabot-qq-mods)，是 Aurabot 的模块市场。
 - 主要维护 `modules/receipt-print/`（热敏打印），其余模块跟随上游。
-- 当前版本 **0.24.0**，当前 PR：[aureth-labs#362](https://github.com/aureth-labs/dsh-aurabot-qq-mods/pull/362)。
+- 当前版本 **0.25.0**，当前 PR：[aureth-labs#362](https://github.com/aureth-labs/dsh-aurabot-qq-mods/pull/362)。
 - 旧的 #354（0.10.x 的 PowerShell / 校准页 / CI 修复）已合并关闭。
 - 维护分支：`feat/receipt-print-0.24`，从上游 `main` 拉出，只改 `modules/receipt-print/` 和 `modules/README.md` 里的 catalog 一行。
 
@@ -30,7 +30,7 @@ modules/receipt-print/
     moments.mjs      说说解析与网址
     requests.mjs     消息打印意图、网页正文抽取
     image.mjs        图片缩放、调色、抖动、1bpp
-  test/              node:test，共 189 项
+  test/              node:test，共 193 项
 ```
 
 ## 版本纪律（最容易出错）
@@ -61,7 +61,7 @@ node scripts/pack.mjs --out /workspace/artifacts --only receipt-print
 
 发布到 fork 的 GitHub Release：
 
-- tag：`receipt-print-v<版本>`，例如 `receipt-print-v0.24.0`
+- tag：`receipt-print-v<版本>`，例如 `receipt-print-v0.25.0`
 - asset：`receipt-print-v<版本>.zip`
 - 下载链接固定为：
   `https://github.com/HDB-Studio/dsh-aurabot-qq-mods/releases/download/receipt-print-v<版本>/receipt-print-v<版本>.zip`
@@ -77,6 +77,8 @@ node scripts/pack.mjs --out /workspace/artifacts --only receipt-print
 
 ## 注意事项
 
+- 消息打印的意图先本地预筛（`looksLikePrintRequest`），再调用模型确认；模型不可用时退回 `parsePrintIntent` 的严格规则。不要为了省一次模型调用把「包含打印就出纸」改回来。
+- 灵感便签提示词升级走 `replacePresetPrompt`，只替换仍是旧默认值的模板，用户改过的不动。
 - Windows 传输用 PowerShell 调 `winspool.drv`，脚本正文必须保持纯 ASCII，中文只在 JS 侧映射；超时 30 秒；每次用唯一 PS1 文件名并在 `finally` 清理。
 - 末尾统一：正文/图片/二维码之后空一行，再打一行按有效宽度铺满的 `=`，走纸 6 行再切纸。
 - 自检页的打印头测试图必须用行内 `style: 'image'`，不要放进 `images` 数组，否则会跑到「自检完成」之后。
@@ -94,6 +96,7 @@ node scripts/pack.mjs --out /workspace/artifacts --only receipt-print
 ## 下一步可以做
 
 - 等 #362 审核合并；合并后把 fork `main` 同步到上游。
+- 如果模型判断误杀明确命令，先看 `confirmPrintIntent` 的提示词和返回值解析。
 - 如果用户反馈某台机器推纸仍偏短，把走纸行数做成设置项。
 - 面板里可以补一个「黑条」按钮，目前只有命令入口。
 - 黑条长度、打印浓度如果用户有更多需求，优先做成设置而不是硬编码。

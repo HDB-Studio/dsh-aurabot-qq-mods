@@ -1,13 +1,13 @@
 # dsh-aurabot-qq-mods
 
-> **HDB 的 fork**：持续维护「热敏打印」（`receipt-print`），当前版本 **0.24.0**。
+> **HDB 的 fork**：持续维护「热敏打印」（`receipt-print`），当前版本 **0.25.0**。
 >
-> - 最新打包：[receipt-print-v0.24.0.zip](https://github.com/HDB-Studio/dsh-aurabot-qq-mods/releases/download/receipt-print-v0.24.0/receipt-print-v0.24.0.zip)
+> - 最新打包：[receipt-print-v0.25.0.zip](https://github.com/HDB-Studio/dsh-aurabot-qq-mods/releases/download/receipt-print-v0.25.0/receipt-print-v0.25.0.zip)
 > - 当前 PR：[aureth-labs#362](https://github.com/aureth-labs/dsh-aurabot-qq-mods/pull/362)
 > - 维护分支：`feat/receipt-print-0.24`（从上游 `main` 拉出，只改 `modules/receipt-print/` 和 catalog 一行）
 > - 给下一个 agent 的交接说明：[AGENTS.md](AGENTS.md)
 >
-> 版本历史：0.24.0 全黑测试条、完整自检页、自动预设、消息打印、二维码来源与说明文档；更早的 0.10.x 修复已随上游 PR #354 合并。
+> 版本历史：0.25.0 模型判断打印意图、灵感便签加长；0.24.0 全黑测试条、完整自检页、自动预设、消息打印、二维码来源与说明文档；更早的 0.10.x 修复已随上游 PR #354 合并。
 
 Aurabot 插件（[dsh-aurabot-qq](https://github.com/accomplish07zrh-eng/dsh-aurabot-qq)）的**模块市场**：面板「模块市场」里能装的模块都在这里。
 
