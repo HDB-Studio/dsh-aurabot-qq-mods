@@ -102,6 +102,27 @@ export function parsePrintIntent(raw) {
   return { text: rest }
 }
 
+// 消息里出现这些词才值得让模型判断；普通聊天不调用模型。
+const PRINT_KEYWORD = /打印|打出来|打下来|印出来|出小票|打成小票|打一张|打一份/
+
+export function looksLikePrintRequest(raw) {
+  const source = String(raw || '').trim()
+  if (!source || /^[/／]/.test(source)) return false
+  if (/^(?:别|不要|不用|先别|无需|不需要|不想)/.test(source)) return false
+  return PRINT_KEYWORD.test(source)
+}
+
+/** 模型确认要打印后，尽量把「帮我打印」「打印一下」这类指令词去掉，只留正文。 */
+export function stripPrintInstructions(raw) {
+  let text = String(raw || '').trim()
+  text = text.replace(/^(?:请|麻烦|帮我|帮忙|给我|替我|能不能|可以|能否|可不可以|你)+/u, '')
+  text = text.replace(/^(?:把)?\s*(?:打印|打出来|打下来|印出来|出小票|打成小票|打一张|打一份|打一下)(?!机|纸|头)\s*/u, '')
+  text = text.replace(/(?:帮我|给我|替我)?\s*(?:打印|打出来|打下来|印出来|出小票|打成小票)(?!机|纸|头)(?:一下|下|一张|一份|一个|个|出来|吧|呗|了|啦)?[。.!！~～]?\s*$/u, '')
+  text = text.trim().replace(/[。.!！~～]+$/, '').trim()
+  if (DEICTIC.test(text)) text = ''
+  return text
+}
+
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
 
 export function decodeEntities(text) {

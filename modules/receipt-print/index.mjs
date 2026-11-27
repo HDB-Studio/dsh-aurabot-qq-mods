@@ -13,13 +13,13 @@ import { resolvePaper, parseHexPayload } from './lib/paper.mjs'
 import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
 import { pickNewMoments, extractImageSources, timeOf, describeMoments, momentUrl } from './lib/moments.mjs'
-import { messageText, messageImages, firstUrl, htmlToText, clipText, parsePrintIntent } from './lib/requests.mjs'
+import { messageText, messageImages, firstUrl, htmlToText, clipText, parsePrintIntent, looksLikePrintRequest, stripPrintInstructions } from './lib/requests.mjs'
 import { readFile, readdir } from 'node:fs/promises'
 import { buildCalibration, buildBlackBand } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.24.0'
+const VERSION = '0.25.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -133,7 +133,7 @@ const PRESET_TEMPLATES = [
   },
   {
     name: '灵感便签',
-    prompt: '请给一个今天就能动手的小创意：先写一句点子，再写需要准备的两样东西，最后写第一步怎么做。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    prompt: '请给 2–3 个今天就能动手的小创意，每个创意写三部分：一句点子、需要准备的两样东西、第一步怎么做；每个创意之间空一行，每个控制在四行以内，尽量写得具体一点。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'think',
     trigger: 'model',
@@ -148,6 +148,15 @@ const PRESET_TEMPLATES = [
     trigger: 'moment',
     schedule: { enabled: false, time: '21:00', days: [] },
     footer: '{date}',
+  },
+]
+
+// 预设提示词的小升级：只替换仍是旧默认值的模板，用户改过的不动。
+const PRESET_PROMPT_UPGRADES = [
+  {
+    name: '灵感便签',
+    from: '请给一个今天就能动手的小创意：先写一句点子，再写需要准备的两样东西，最后写第一步怎么做。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    to: PRESET_TEMPLATES.find((item) => item.name === '灵感便签')?.prompt || '',
   },
 ]
 
@@ -295,6 +304,7 @@ export default {
     store.seedSummary(SEED_SUMMARY)
     store.seedPresets(PRESET_TEMPLATES)
     store.syncPresetEngines([SEED_TEMPLATE, SEED_SUMMARY, ...PRESET_TEMPLATES])
+    for (const item of PRESET_PROMPT_UPGRADES) store.replacePresetPrompt(item.name, item.from, item.to)
 
     const settingsNow = () => normalizeSettings(api.settings())
 
@@ -740,7 +750,7 @@ export default {
       return lines.join('\n')
     }
 
-    // ---------- 消息打印：私聊发文字/图片/链接就出纸，群里要 @ 它 ----------
+    // ---------- 消息打印：提到打印后先让模型确认真实意图，群里要 @ 它 ----------
     async function fetchArticle(url, settings) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(15000),
@@ -820,6 +830,28 @@ export default {
         : { ok: false, message: `打印失败：${result.error || '未知错误'}` }
     }
 
+    /**
+     * 消息里出现「打印」不再直接出纸，先让模型判断是不是真的在要求打印。
+     * 模型不可用时退回严格规则：明确命令照打，模糊提及不打。
+     */
+    async function confirmPrintIntent(rawText) {
+      const strict = parsePrintIntent(rawText)
+      if (typeof api.ask !== 'function') return Boolean(strict)
+      try {
+        const answer = await api.ask({
+          system: '你是意图分类器，只回答「是」或「否」，不要解释。',
+          text: `消息：${rawText}\n\n这句话是不是在要求对方现在用热敏打印机把某些内容打印出来？只是提到打印机、打印纸、问能不能打印、或开玩笑，都回答「否」。`,
+          maxTokens: 8,
+        })
+        const first = String(answer || '').trim().replace(/^[「“"'\s]+/, '')
+        if (/^(是|对|要|打|yes|y)/i.test(first)) return true
+        if (/^(否|不|别|没|no|n)/i.test(first)) return false
+      } catch (error) {
+        log.warn?.(`打印意图判断失败：${error.message}`)
+      }
+      return Boolean(strict)
+    }
+
     async function handlePrintRequest(msg) {
       const settings = settingsNow()
       if (settings.printRequests === 'off' || settings.enabled === false) return
@@ -829,9 +861,11 @@ export default {
       if (msg.kind === 'group' && !msg.mentioned) return
       const rawText = messageText(msg)
       if (/^[/／]/.test(rawText)) return
-      // 只有明确说「打印」才出纸，普通聊天和随手发的图文都不打
-      const intent = parsePrintIntent(rawText)
-      if (!intent) return
+      // 先做规则预筛：消息里没有打印相关词就不叫模型，避免普通聊天白等
+      const strict = parsePrintIntent(rawText)
+      if (!strict && !looksLikePrintRequest(rawText)) return
+      if (!(await confirmPrintIntent(rawText))) return
+      const intent = strict || { text: stripPrintInstructions(rawText) }
       const text = intent.text
       const sources = []
       for (const item of messageImages(msg)) {

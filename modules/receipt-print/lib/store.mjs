@@ -233,6 +233,16 @@ export function openStore(dir) {
       return state.history.slice(0, Math.max(1, Number(limit) || 10))
     },
     backupDir(customDir = '') { return resolveBackupTarget(dir, customDir) },
+    // 只替换仍是默认提示词的预设，用户改过的不动。
+    replacePresetPrompt(name, from, to) {
+      const template = state.templates.find((t) => t.name === name)
+      if (!template || !from || !to) return false
+      if (String(template.prompt).trim() !== String(from).trim()) return false
+      template.prompt = to
+      template.updatedAt = Date.now()
+      save()
+      return true
+    },
     lastRun(id) { return state.lastRun[id] || '' },
     markRun(id, date) {
       state.lastRun[id] = date

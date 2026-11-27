@@ -100,6 +100,16 @@ test('预设生成方式只同步一次，且不动改过提示词的模板', as
   assert.equal(reopened.get('每日简报').engine, 'think', '同步只做一次，之后尊重用户选择')
 })
 
+test('预设提示词升级只替换未改过的默认值', async () => {
+  const store = openStore(await tempDir())
+  store.saveTemplate({ name: '灵感便签', prompt: '旧默认提示词' })
+  store.saveTemplate({ name: '晨间计划', prompt: '我自己改的' })
+  assert.equal(store.replacePresetPrompt('灵感便签', '旧默认提示词', '新默认提示词'), true)
+  assert.equal(store.get('灵感便签').prompt, '新默认提示词')
+  assert.equal(store.replacePresetPrompt('晨间计划', '旧默认提示词', '新默认提示词'), false)
+  assert.equal(store.get('晨间计划').prompt, '我自己改的')
+})
+
 test('按名字或 id 取模板，保存和删除', async () => {
   const store = openStore(await tempDir())
   const t = store.saveTemplate({ name: '日报', prompt: '写日报', schedule: { enabled: true, time: '08:30', days: [1, 3] } })

@@ -14,7 +14,7 @@ function bodyReq(payload) {
   }
 }
 
-async function boot({ diary = null, config = null, sendText = null, terms = true } = {}) {
+async function boot({ diary = null, config = null, sendText = null, terms = true, ask = null } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'receipt-index-'))
   const settings = terms ? { termsVersion: TERMS_VERSION } : {}
   const commands = new Map()
@@ -41,7 +41,7 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
       if (sendText) await sendText(target, text)
     },
     log: { info() {}, warn() {}, error() {}, debug() {} },
-    ask: async () => '今天适合打印小票。\n第二行',
+    ask: ask || (async () => '今天适合打印小票。\n第二行'),
     think: async () => '想好了，今天适合打印小票。',
   }
   const exports = mod.setup(api)
@@ -510,6 +510,39 @@ test('消息打印：普通聊天、随手发的图文都不打', async () => {
     await handlers.get('message')({ kind: 'private', userId: '1', text })
   }
   await handlers.get('message')({ kind: 'private', userId: '1', text: '', raw: { message: '[CQ:image,file=a.jpg,url=https://x/a.png]' } })
+  assert.equal(replies.length, 0)
+})
+
+test('消息打印：模型说不是真要打印时，明确命令也不出纸', async () => {
+  let asked = 0
+  const { handlers, settings, replies } = await boot({
+    ask: async () => { asked += 1; return '否' },
+  })
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '打印 今天吃什么' })
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '你打印机修好了吗' })
+  assert.equal(asked, 2, '有打印相关词才问模型')
+  assert.equal(replies.length, 0)
+})
+
+test('消息打印：模型确认后，模糊说法也能打印并去掉指令词', async () => {
+  const { handlers, settings, replies, routes } = await boot({ ask: async () => '是' })
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '能不能把这句话打印出来' })
+  assert.match(replies.at(-1).text, /已发送到「预览机」/)
+  const entry = routes.get('/history')().history[0]
+  assert.ok(entry.text.includes('这句话'))
+  assert.ok(!entry.text.includes('打印'))
+})
+
+test('消息打印：纯聊天不调用模型判断', async () => {
+  let asked = 0
+  const { handlers, settings, replies } = await boot({
+    ask: async () => { asked += 1; return '是' },
+  })
+  settings.printer = { name: '预览机', transport: 'preview' }
+  await handlers.get('message')({ kind: 'private', userId: '1', text: '今天天气不错' })
+  assert.equal(asked, 0)
   assert.equal(replies.length, 0)
 })
 
