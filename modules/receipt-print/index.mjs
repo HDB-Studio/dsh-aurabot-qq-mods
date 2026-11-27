@@ -19,7 +19,7 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.16.0'
+const VERSION = '0.17.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -88,6 +88,50 @@ const SEED_SUMMARY = {
   schedule: { enabled: true, time: '18:00', days: [] },
   footer: '{date}',
 }
+
+// 老用户和首次安装都补这一批，只补一次；删掉的不会复活，同名的不会重复。
+const PRESET_TEMPLATES = [
+  {
+    name: '晨间计划',
+    prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的晨间计划：三件今天最重要的事，每件一行、前面加序号；两件顺手就能做完的小事，每件前面加 [ ]；最后写一句给自己的提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    schedule: { enabled: false, time: '07:30', days: [] },
+    footer: '{date}',
+  },
+  {
+    name: '今日菜单',
+    prompt: '今天是 {date} {weekday}。请给今天的一日三餐建议：早餐、午餐、晚餐各一条，尽量简单好做，最后加一句喝水提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    schedule: { enabled: false, time: '11:00', days: [] },
+    footer: '{date}',
+  },
+  {
+    name: '本周回顾',
+    prompt: '今天是 {date} {weekday}。请写一份本周回顾：这周完成的 3 件事、一个明显的进步、一件没做好的事、下周最想改变的一件事，每项一行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    schedule: { enabled: false, time: '20:00', days: [0] },
+    footer: '{date}',
+  },
+  {
+    name: '睡前一句',
+    prompt: '现在是 {time}。请写一张适合睡前看的小纸条：一句温柔的晚安，一句今天值得记住的小事，一句明天的小期待，总共不超过四行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    schedule: { enabled: false, time: '22:30', days: [] },
+    footer: '{date}',
+  },
+  {
+    name: '灵感便签',
+    prompt: '请给一个今天就能动手的小创意：先写一句点子，再写需要准备的两样东西，最后写第一步怎么做。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    schedule: { enabled: false, time: '09:00', days: [] },
+    footer: '{date}',
+  },
+]
 
 function normalizeSettings(raw = {}) {
   const source = raw && typeof raw === 'object' ? raw : {}
@@ -227,6 +271,7 @@ export default {
 
     if (store.templates().length === 0) store.seed(SEED_TEMPLATE)
     store.seedSummary(SEED_SUMMARY)
+    store.seedPresets(PRESET_TEMPLATES)
 
     const settingsNow = () => normalizeSettings(api.settings())
 

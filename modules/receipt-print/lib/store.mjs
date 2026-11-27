@@ -152,7 +152,7 @@ function pruneBackups(target) {
 export function openStore(dir) {
   mkdirSync(dir, { recursive: true })
   const file = join(dir, 'state.json')
-  let state = { version: 1, seeded: false, seededSummary: false, templates: [], history: [], lastRun: {}, moment: { lastAt: 0 } }
+  let state = { version: 1, seeded: false, seededSummary: false, seededPresets: false, templates: [], history: [], lastRun: {}, moment: { lastAt: 0 } }
   if (existsSync(file)) {
     try {
       const loaded = JSON.parse(readFileSync(file, 'utf8'))
@@ -259,6 +259,19 @@ export function openStore(dir) {
         return null
       }
       return this.saveTemplate(template)
+    },
+    // 额外预设只补一次：同名的跳过，删掉的不会复活，最多铺满模板上限。
+    seedPresets(presets = []) {
+      if (state.seededPresets) return []
+      state.seededPresets = true
+      const created = []
+      for (const template of presets) {
+        if (state.templates.length >= MAX_TEMPLATES) break
+        if (!template?.name || state.templates.some((t) => t.name === template.name)) continue
+        created.push(this.saveTemplate(template))
+      }
+      save()
+      return created
     },
   }
 }

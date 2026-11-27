@@ -43,6 +43,28 @@ test('今日总结只补种一次，删掉也不复活', async () => {
   assert.equal(again.get('今日总结'), null)
 })
 
+test('额外预设只补一次：同名跳过，删掉不复活', async () => {
+  const dir = await tempDir()
+  const store = openStore(dir)
+  store.seed({ name: '每日简报', prompt: '写简报' })
+  const created = store.seedPresets([
+    { name: '每日简报', prompt: '重复的' },
+    { name: '晨间计划', prompt: '写计划' },
+    { name: '睡前一句', prompt: '写晚安', schedule: { enabled: false, time: '22:30', days: [] } },
+  ])
+  assert.deepEqual(created.map((t) => t.name), ['晨间计划', '睡前一句'])
+  assert.equal(store.templates().length, 3)
+  assert.equal(store.get('每日简报').prompt, '写简报', '同名的旧模板不能被覆盖')
+
+  assert.deepEqual(store.seedPresets([{ name: '今日菜单', prompt: '写菜单' }]), [])
+  assert.equal(store.templates().length, 3)
+
+  store.deleteTemplate('晨间计划')
+  const again = openStore(dir)
+  assert.deepEqual(again.seedPresets([{ name: '晨间计划', prompt: '写计划' }]), [])
+  assert.equal(again.get('晨间计划'), null)
+})
+
 test('按名字或 id 取模板，保存和删除', async () => {
   const store = openStore(await tempDir())
   const t = store.saveTemplate({ name: '日报', prompt: '写日报', schedule: { enabled: true, time: '08:30', days: [1, 3] } })

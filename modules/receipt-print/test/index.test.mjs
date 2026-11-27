@@ -48,10 +48,10 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
   return { dir, settings, commands, routes, ticks, handlers, exports, sent, replies }
 }
 
-test('启动后自动种下「每日简报」和「今日总结」', async () => {
+test('启动后自动种下预设模板，只有「今日总结」默认定时', async () => {
   const { exports } = await boot()
   const templates = exports.templates()
-  assert.equal(templates.length, 2)
+  assert.equal(templates.length, 7)
   const brief = templates.find((t) => t.name === '每日简报')
   assert.equal(brief.schedule.enabled, false)
 
@@ -59,6 +59,12 @@ test('启动后自动种下「每日简报」和「今日总结」', async () =>
   assert.equal(summary.schedule.enabled, true)
   assert.equal(summary.schedule.time, '18:00')
   assert.deepEqual(summary.schedule.days, [])
+
+  const names = templates.map((t) => t.name)
+  for (const name of ['晨间计划', '今日菜单', '本周回顾', '睡前一句', '灵感便签']) {
+    assert.ok(names.includes(name), `缺少预设 ${name}`)
+  }
+  assert.deepEqual(templates.filter((t) => t.schedule.enabled).map((t) => t.name), ['今日总结'], '只有今日总结默认自动打印')
 })
 
 test('/小票 列表', async () => {
@@ -98,7 +104,7 @@ test('面板接口：模板、保存、运行预览、历史、快速预览', as
 
   const listed = routes.get('/templates')()
   assert.equal(listed.ok, true)
-  assert.equal(listed.templates.length, 2)
+  assert.equal(listed.templates.length, 7)
   assert.ok(listed.templates.some((t) => t.name === '今日总结'))
   assert.match(listed.version, /^\d+\.\d+\.\d+$/)
   const manifest = JSON.parse(await readFile(new URL('../module.json', import.meta.url), 'utf8'))
@@ -192,7 +198,7 @@ test('/自检：默认发内置 ESC/POS 自检页', async () => {
   const text = await commands.get('自检').run('')
   assert.match(text, /自检页已发到「预览机」/)
   assert.match(text, /32 列/)
-  assert.equal(exports.templates().length, 2, '自检不影响模板')
+  assert.equal(exports.templates().length, 7, '自检不影响模板')
 })
 
 test('/自检：旧配置的 printers 数组取第一台', async () => {
