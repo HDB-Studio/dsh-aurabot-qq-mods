@@ -19,14 +19,16 @@ import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.17.0'
+const VERSION = '0.18.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
   command: '命令',
   panel: '面板',
   schedule: '定时',
+  startup: '启动',
   moment: '说说',
+  model: '自触发',
   selftest: '自检',
   calibrate: '校准',
   unknown: '未知',
@@ -76,6 +78,7 @@ const SEED_TEMPLATE = {
   prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的今日简报：一句问候，三条值得关注的事，一句提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
   system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
   engine: 'ask',
+  trigger: 'startup',
   schedule: { enabled: false, time: '08:30', days: [] },
   footer: '{date}',
 }
@@ -85,6 +88,7 @@ const SEED_SUMMARY = {
   prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的今日总结：今天发生了什么、做完了什么、还有什么没做完、明天最要紧的一件事。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
   system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
   engine: 'ask',
+  trigger: 'schedule',
   schedule: { enabled: true, time: '18:00', days: [] },
   footer: '{date}',
 }
@@ -96,7 +100,8 @@ const PRESET_TEMPLATES = [
     prompt: '今天是 {date} {weekday}。请写一份适合打印在小票上的晨间计划：三件今天最重要的事，每件一行、前面加序号；两件顺手就能做完的小事，每件前面加 [ ]；最后写一句给自己的提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'ask',
-    schedule: { enabled: false, time: '07:30', days: [] },
+    trigger: 'schedule',
+    schedule: { enabled: true, time: '07:30', days: [] },
     footer: '{date}',
   },
   {
@@ -104,7 +109,8 @@ const PRESET_TEMPLATES = [
     prompt: '今天是 {date} {weekday}。请给今天的一日三餐建议：早餐、午餐、晚餐各一条，尽量简单好做，最后加一句喝水提醒。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'ask',
-    schedule: { enabled: false, time: '11:00', days: [] },
+    trigger: 'schedule',
+    schedule: { enabled: true, time: '11:00', days: [] },
     footer: '{date}',
   },
   {
@@ -112,7 +118,8 @@ const PRESET_TEMPLATES = [
     prompt: '今天是 {date} {weekday}。请写一份本周回顾：这周完成的 3 件事、一个明显的进步、一件没做好的事、下周最想改变的一件事，每项一行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'ask',
-    schedule: { enabled: false, time: '20:00', days: [0] },
+    trigger: 'schedule',
+    schedule: { enabled: true, time: '20:00', days: [0] },
     footer: '{date}',
   },
   {
@@ -120,7 +127,8 @@ const PRESET_TEMPLATES = [
     prompt: '现在是 {time}。请写一张适合睡前看的小纸条：一句温柔的晚安，一句今天值得记住的小事，一句明天的小期待，总共不超过四行。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'ask',
-    schedule: { enabled: false, time: '22:30', days: [] },
+    trigger: 'schedule',
+    schedule: { enabled: true, time: '22:30', days: [] },
     footer: '{date}',
   },
   {
@@ -128,7 +136,17 @@ const PRESET_TEMPLATES = [
     prompt: '请给一个今天就能动手的小创意：先写一句点子，再写需要准备的两样东西，最后写第一步怎么做。只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
     system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
     engine: 'ask',
+    trigger: 'model',
     schedule: { enabled: false, time: '09:00', days: [] },
+    footer: '{date}',
+  },
+  {
+    name: '说说随想',
+    prompt: '她刚发了一条空间说说：「{moment}」。请写一张适合贴在后面的小纸条：一句懂她的小感想，再加一句给明天的她。不要复述原话，只输出正文，不要标题，不要 Markdown，每行不超过 {width} 个字符。',
+    system: '你是简洁的中文助理。只输出要打印在小票上的纯文本正文，不要解释、不要代码块、不要 Markdown。',
+    engine: 'ask',
+    trigger: 'moment',
+    schedule: { enabled: false, time: '21:00', days: [] },
     footer: '{date}',
   },
 ]
@@ -350,7 +368,7 @@ export default {
       const printer = currentPrinter(settings)
       const paper = paperFor(settings, printer, template)
       const now = options.now instanceof Date ? options.now : new Date()
-      const prompt = buildPrompt(template, { ...paper, width: paper.columns, now })
+      const prompt = buildPrompt(template, { ...paper, width: paper.columns, now, extra: options.extraVars })
       if (!prompt.text) return { ok: false, message: '模板提示词是空的' }
 
       running.add(template.id)
@@ -587,7 +605,10 @@ export default {
     async function scanMoments() {
       const settings = settingsNow()
       if (!termsAccepted(settings)) return 0
-      if (settings.enabled === false || !settings.momentAuto) return 0
+      if (settings.enabled === false) return 0
+      const momentTemplates = store.templates().filter((t) => t.enabled !== false && t.trigger === 'moment')
+      // 说说小票和「说说后跟打」的模板都关掉时，不用读 diary
+      if (!settings.momentAuto && !momentTemplates.length) return 0
       const diary = typeof api.use === 'function' ? api.use('diary') : null
       if (!diary || typeof diary.history !== 'function') {
         if (!momentsWarned) {
@@ -613,6 +634,7 @@ export default {
       }
       let printed = 0
       for (const row of rows) {
+        if (!settings.momentAuto) break
         store.markMoment(timeOf(row.at ?? row.time ?? row.createdAt))
         try {
           await printMoment(row)
@@ -623,7 +645,35 @@ export default {
         }
       }
       store.markMoment(watermark)
+      if (rows.length && momentTemplates.length) {
+        await runMomentTemplates(rows, watermark)
+      }
       return printed
+    }
+
+    /** 她发完说说后跟打的模板：同一批说说只跟打一次。 */
+    async function runMomentTemplates(rows, watermark) {
+      const key = `moment:${watermark}`
+      const momentText = rows
+        .map((row) => String(row?.text || '').trim())
+        .filter(Boolean)
+        .join('\n\n')
+        .slice(0, 800)
+      for (const template of store.templates()) {
+        if (template.enabled === false || template.trigger !== 'moment') continue
+        if (store.lastRun(template.id) === key) continue
+        store.markRun(template.id, key)
+        try {
+          const result = await runTemplate(template, {
+            trigger: { type: 'moment', reason: `说说 ${rows.length} 条` },
+            extraVars: { moment: momentText },
+          })
+          if (!result.ok) log.warn?.(`说说后小票「${template.name}」失败：${result.message}`)
+        } catch (error) {
+          log.warn?.(`说说后小票「${template.name}」出错：${error.message}`)
+          reportError('说说后小票失败', `模板：${template.name}\n插件版本：${VERSION}\n原因：${error.message}`)
+        }
+      }
     }
 
     /** 排查用：说明自动打印的开关、diary 模块状态、水位和待打条数；force=true 时立刻补打一次。 */
@@ -978,10 +1028,75 @@ export default {
       }
     }
 
-    // ---------- 定时 ----------
+    // ---------- 定时 / 启动 / 自触发 ----------
+    let startupChecked = false
+
+    /** 启动时打：模块加载后第一个检查周期跑一次，同一天重启不重复。 */
+    async function runStartupTemplates() {
+      if (startupChecked) return
+      const settings = settingsNow()
+      if (settings.enabled === false) return
+      startupChecked = true
+      const today = formatDate(new Date()).date
+      for (const template of store.templates()) {
+        if (template.enabled === false || template.trigger !== 'startup') continue
+        if (store.lastRun(template.id) === today) continue
+        store.markRun(template.id, today)
+        try {
+          const result = await runTemplate(template, { trigger: { type: 'startup', reason: '启动时' } })
+          if (!result.ok) log.warn?.(`启动小票「${template.name}」失败：${result.message}`)
+        } catch (error) {
+          log.warn?.(`启动小票「${template.name}」出错：${error.message}`)
+        }
+      }
+    }
+
+    const MODEL_SLOT_HOURS = 3
+    const MODEL_DAILY_MAX = 3
+
+    /** 让模型判断时机：白天每 3 小时问一次，只有回答「打」才出纸，每天最多 3 张。 */
+    async function runModelTemplates() {
+      const settings = settingsNow()
+      if (settings.enabled === false || !termsAccepted(settings)) return
+      const templates = store.templates().filter((t) => t.enabled !== false && t.trigger === 'model')
+      if (!templates.length) return
+      const now = new Date()
+      if (now.getHours() < 7 || now.getHours() >= 23) return
+      const stamp = formatDate(now)
+      const slot = `model:${stamp.date}-${Math.floor(now.getHours() / MODEL_SLOT_HOURS)}`
+      let printedToday = store.history(30).filter((entry) => entry.trigger?.type === 'model'
+        && formatDate(new Date(entry.at)).date === stamp.date).length
+      for (const template of templates) {
+        if (store.lastRun(template.id) === slot) continue
+        store.markRun(template.id, slot)
+        if (printedToday >= MODEL_DAILY_MAX) continue
+        let answer = ''
+        try {
+          answer = await api.ask({
+            system: '你是克制的中文助理，只回答「打」或「不打」，不要解释。',
+            text: `现在是 ${stamp.datetime} ${stamp.weekday}。要现在打印一张「${template.name}」小票吗？只有确实合适才回答「打」。`,
+            maxTokens: 8,
+          })
+        } catch (error) {
+          log.warn?.(`自触发判断失败：${error.message}`)
+          continue
+        }
+        const verdict = cleanModelText(answer, { maxChars: 20 }).trim()
+        if (!/^打/.test(verdict) || verdict.includes('不打')) continue
+        try {
+          const result = await runTemplate(template, { trigger: { type: 'model', reason: '模型判断' } })
+          if (!result.ok) log.warn?.(`自触发小票「${template.name}」失败：${result.message}`)
+          else printedToday += 1
+        } catch (error) {
+          log.warn?.(`自触发小票「${template.name}」出错：${error.message}`)
+        }
+      }
+    }
+
     api.every(60 * 1000, async () => {
       const settings = settingsNow()
       if (settings.enabled === false) return
+      await runStartupTemplates()
       const due = tick({
         templates: store.templates(),
         now: new Date(),
@@ -1007,6 +1122,15 @@ export default {
         log.warn?.(`说说自动打印出错：${error.message}`)
       }
     }, '说说自动打印')
+
+    // 让模型判断时机：每 15 分钟看一次，内部按 3 小时一个时段限流。
+    api.every(15 * 60 * 1000, async () => {
+      try {
+        await runModelTemplates()
+      } catch (error) {
+        log.warn?.(`自触发检查出错：${error.message}`)
+      }
+    }, '热敏打印自触发')
 
     // 私聊直接发、群里 @ 它就打；指令以 / 开头，交给上面的命令系统。
     api.on('message', (msg) => handlePrintRequest(msg)

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { openStore } from '../lib/store.mjs'
+import { openStore, normalizeTemplate } from '../lib/store.mjs'
 
 const tempDir = () => mkdtemp(join(tmpdir(), 'receipt-store-'))
 
@@ -41,6 +41,22 @@ test('今日总结只补种一次，删掉也不复活', async () => {
   const again = openStore(dir)
   assert.equal(again.seedSummary({ name: '今日总结', prompt: '写总结' }), null)
   assert.equal(again.get('今日总结'), null)
+})
+
+test('模板触发方式：定时与 schedule.enabled 同步，旧的按 enabled 推断', () => {
+  const schedule = normalizeTemplate({ name: '定时', schedule: { enabled: true, time: '07:00' } })
+  assert.equal(schedule.trigger, 'schedule')
+  assert.equal(schedule.schedule.enabled, true)
+
+  const legacy = normalizeTemplate({ name: '旧模板', schedule: { enabled: false } })
+  assert.equal(legacy.trigger, 'manual')
+
+  const model = normalizeTemplate({ name: '自触发', trigger: 'model', schedule: { enabled: true } })
+  assert.equal(model.trigger, 'model')
+  assert.equal(model.schedule.enabled, false, '非定时触发不能保留定时标记')
+
+  const unknown = normalizeTemplate({ name: '乱填', trigger: 'xxx' })
+  assert.equal(unknown.trigger, 'manual')
 })
 
 test('额外预设只补一次：同名跳过，删掉不复活', async () => {

@@ -22,6 +22,15 @@ test('构造提示词：正文和系统提示词都替换', () => {
   assert.equal(system, '不超过 32 字')
 })
 
+test('构造提示词：说说后自动打印可以带 {moment} 正文', () => {
+  const { text } = buildPrompt(
+    { name: '说说随想', prompt: '她刚说：「{moment}」' },
+    { width: 32, extra: { moment: '今天风很大' } },
+  )
+  assert.equal(text, '她刚说：「今天风很大」')
+  assert.ok(PLACEHOLDER_DOCS.some(([key]) => key === 'moment'), '占位符说明里要有 moment')
+})
+
 test('模型输出清洗：去掉 Markdown', () => {
   const out = cleanModelText('```text\n# 标题\n- 第一条\n**重点** 和 `代码`\n[链接](https://x.com)\n```')
   assert.equal(out, '标题\n· 第一条\n重点 和 代码\n链接')

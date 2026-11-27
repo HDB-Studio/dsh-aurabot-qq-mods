@@ -6,7 +6,9 @@ const MAX_TEMPLATES = 30
 const MAX_HISTORY = 30
 const MAX_BACKUPS = 200
 const MAX_TEXT = 8000
-const TRIGGER_TYPES = ['command', 'panel', 'schedule', 'moment', 'selftest', 'unknown']
+const TRIGGER_TYPES = ['command', 'panel', 'schedule', 'startup', 'moment', 'model', 'selftest', 'calibrate', 'unknown']
+// 模板的自触发方式：手动 / 定时 / 启动时 / 她发完说说后 / 让模型判断
+const TEMPLATE_TRIGGERS = ['manual', 'schedule', 'startup', 'moment', 'model']
 
 export function newId() {
   return `tpl-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -28,6 +30,10 @@ export function normalizeTemplate(raw = {}) {
   const days = Array.isArray(schedule.days)
     ? [...new Set(schedule.days.map((d) => Number(d)).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))]
     : []
+  // 老模板只有 schedule.enabled：有定时就算定时，否则手动
+  const trigger = TEMPLATE_TRIGGERS.includes(String(raw.trigger || ''))
+    ? String(raw.trigger)
+    : (schedule.enabled === true ? 'schedule' : 'manual')
   return {
     id: String(raw.id || newId()),
     name: String(raw.name || '未命名模板').trim().slice(0, 40),
@@ -35,8 +41,9 @@ export function normalizeTemplate(raw = {}) {
     prompt: String(raw.prompt || ''),
     system: String(raw.system || ''),
     engine: raw.engine === 'think' ? 'think' : 'ask',
+    trigger,
     schedule: {
-      enabled: schedule.enabled === true,
+      enabled: trigger === 'schedule',
       time: /^\d{2}:\d{2}$/.test(String(schedule.time || '')) ? String(schedule.time) : '08:30',
       days,
     },
@@ -276,4 +283,4 @@ export function openStore(dir) {
   }
 }
 
-export { MAX_TEMPLATES, MAX_HISTORY }
+export { MAX_TEMPLATES, MAX_HISTORY, TEMPLATE_TRIGGERS }

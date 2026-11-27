@@ -14,6 +14,7 @@ export const PLACEHOLDER_DOCS = [
   ['paper', '纸张宽度 mm', '58'],
   ['effective', '有效打印宽度 mm', '48'],
   ['name', '当前模板名', '每日简报'],
+  ['moment', '触发这次打印的说说正文（说说后自动打印用）', '今天风很大'],
 ]
 
 export const PLACEHOLDERS = PLACEHOLDER_DOCS.map(([key]) => key)
@@ -39,8 +40,8 @@ export function substitute(text, vars) {
   })
 }
 
-export function templateVars(template, { width, paperMm = 58, effectiveMm = 48, now = new Date() } = {}) {
-  return {
+export function templateVars(template, { width, paperMm = 58, effectiveMm = 48, now = new Date(), extra = {} } = {}) {
+  const vars = {
     ...formatDate(now),
     // width 保留为「每行字符数」，方便旧提示词继续用
     width: String(width),
@@ -48,11 +49,15 @@ export function templateVars(template, { width, paperMm = 58, effectiveMm = 48, 
     paper: String(paperMm),
     effective: String(effectiveMm),
     name: String(template?.name || ''),
+    ...(extra && typeof extra === 'object' ? extra : {}),
   }
+  // 说说后自动打印才带正文；其他场合占位符替换成空，不留 {moment}
+  if (vars.moment === undefined) vars.moment = ''
+  return vars
 }
 
-export function buildPrompt(template, { width, paperMm, effectiveMm, now = new Date() } = {}) {
-  const vars = templateVars(template, { width, paperMm, effectiveMm, now })
+export function buildPrompt(template, { width, paperMm, effectiveMm, now = new Date(), extra = {} } = {}) {
+  const vars = templateVars(template, { width, paperMm, effectiveMm, now, extra })
   const text = substitute(template?.prompt, vars).trim()
   const system = substitute(template?.system || '你是简洁的中文助理。只输出要打印在小票上的正文，不要 Markdown、不要代码块、不要解释。', vars).trim()
   return { system, text }

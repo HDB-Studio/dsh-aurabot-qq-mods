@@ -48,30 +48,46 @@ async function boot({ diary = null, config = null, sendText = null, terms = true
   return { dir, settings, commands, routes, ticks, handlers, exports, sent, replies }
 }
 
-test('启动后自动种下预设模板，只有「今日总结」默认定时', async () => {
+test('启动后自动种下预设模板：定时为主，另有启动/说说后/模型判断', async () => {
   const { exports } = await boot()
   const templates = exports.templates()
-  assert.equal(templates.length, 7)
+  assert.equal(templates.length, 8)
   const brief = templates.find((t) => t.name === '每日简报')
-  assert.equal(brief.schedule.enabled, false)
+  assert.equal(brief.trigger, 'startup')
 
   const summary = templates.find((t) => t.name === '今日总结')
-  assert.equal(summary.schedule.enabled, true)
+  assert.equal(summary.trigger, 'schedule')
   assert.equal(summary.schedule.time, '18:00')
   assert.deepEqual(summary.schedule.days, [])
 
-  const names = templates.map((t) => t.name)
-  for (const name of ['晨间计划', '今日菜单', '本周回顾', '睡前一句', '灵感便签']) {
-    assert.ok(names.includes(name), `缺少预设 ${name}`)
-  }
-  assert.deepEqual(templates.filter((t) => t.schedule.enabled).map((t) => t.name), ['今日总结'], '只有今日总结默认自动打印')
+  const byTrigger = (mode) => templates.filter((t) => t.trigger === mode).map((t) => t.name)
+  assert.deepEqual(byTrigger('startup'), ['每日简报'])
+  assert.deepEqual(byTrigger('moment'), ['说说随想'])
+  assert.deepEqual(byTrigger('model'), ['灵感便签'])
+  assert.deepEqual(byTrigger('schedule'), ['今日总结', '晨间计划', '今日菜单', '本周回顾', '睡前一句'])
+  assert.deepEqual(templates.filter((t) => t.schedule.enabled).map((t) => t.name), byTrigger('schedule'))
+})
+
+test('启动时模板：第一次检查打一张，同一天不重复', async () => {
+  const { settings, ticks, routes } = await boot()
+  settings.printer = { name: '预览机', transport: 'preview' }
+  const tick = ticks.get('热敏打印定时')
+  await tick()
+  const history = routes.get('/history')().history
+  const first = history.find((entry) => entry.template === '每日简报')
+  assert.ok(first, '启动时应该打「每日简报」')
+  assert.equal(first.trigger.type, 'startup')
+
+  await tick()
+  const again = routes.get('/history')().history.filter((entry) => entry.template === '每日简报')
+  assert.equal(again.length, 1, '同一天重启不重复打')
 })
 
 test('/小票 列表', async () => {
   const { commands } = await boot()
-  const text = await commands.get('小票').run('')
-  assert.match(text, /每日简报/)
-  assert.match(text, /用法/)
+  const list = await commands.get('小票').run('')
+  assert.match(list, /每日简报/)
+  assert.match(list, /用法/)
 })
 
 test('/小票 预览 走模型但不出纸', async () => {
@@ -104,7 +120,7 @@ test('面板接口：模板、保存、运行预览、历史、快速预览', as
 
   const listed = routes.get('/templates')()
   assert.equal(listed.ok, true)
-  assert.equal(listed.templates.length, 7)
+  assert.equal(listed.templates.length, 8)
   assert.ok(listed.templates.some((t) => t.name === '今日总结'))
   assert.match(listed.version, /^\d+\.\d+\.\d+$/)
   const manifest = JSON.parse(await readFile(new URL('../module.json', import.meta.url), 'utf8'))
@@ -198,7 +214,7 @@ test('/自检：默认发内置 ESC/POS 自检页', async () => {
   const text = await commands.get('自检').run('')
   assert.match(text, /自检页已发到「预览机」/)
   assert.match(text, /32 列/)
-  assert.equal(exports.templates().length, 7, '自检不影响模板')
+  assert.equal(exports.templates().length, 8, '自检不影响模板')
 })
 
 test('/自检：旧配置的 printers 数组取第一台', async () => {
@@ -235,13 +251,17 @@ test('说说：新的公开说说自动打印并推进水位', async () => {
 
   diary.entries.push({ at: base + 10000, text: '新说说：今天风很大' })
   await exports.checkMoments()
-  const history = routes.get('/history')().history
-  assert.equal(history.length, 1)
-  assert.equal(history[0].template, '说说')
-  assert.ok(history[0].ok)
+  let history = routes.get('/history')().history
+  assert.equal(history.length, 2)
+  const momentReceipt = history.find((entry) => entry.template === '说说')
+  assert.ok(momentReceipt?.ok)
+  const note = history.find((entry) => entry.template === '说说随想')
+  assert.ok(note, '说说后跟打模板应该出一张')
+  assert.equal(note.trigger.type, 'moment')
 
   await exports.checkMoments()
-  assert.equal(routes.get('/history')().history.length, 1, '同一个说说不会重复打印')
+  history = routes.get('/history')().history
+  assert.equal(history.length, 2, '同一个说说不会重复打印')
 })
 
 test('说说：默认跳过仅自己可见的', async () => {
@@ -257,8 +277,9 @@ test('说说：默认跳过仅自己可见的', async () => {
 
   diary.entries.push({ at: base + 20000, text: '公开的', visibility: 'public' })
   await exports.checkMoments()
-  assert.equal(routes.get('/history')().history.length, 1)
-  assert.equal(routes.get('/history')().history[0].template, '说说')
+  const history = routes.get('/history')().history
+  assert.equal(history.length, 2)
+  assert.ok(history.some((entry) => entry.template === '说说'))
 })
 
 test('说说：配图会按纸宽做成位图后再打印', async () => {
@@ -276,8 +297,9 @@ test('说说：配图会按纸宽做成位图后再打印', async () => {
   diary.entries.push({ at: base + 10000, text: '带图说说', images: [dataUrl] })
   await exports.checkMoments()
   const history = routes.get('/history')().history
-  assert.equal(history.length, 1)
-  assert.equal(history[0].images, 1)
+  const momentReceipt = history.find((entry) => entry.template === '说说')
+  assert.equal(momentReceipt.images, 1)
+  assert.ok(history.some((entry) => entry.template === '说说随想'))
 })
 
 test('/小票 解码 能读懂发出去的指令', async () => {
@@ -345,10 +367,11 @@ test('说说自动打印记录触发来源和说说 ID', async () => {
   await exports.checkMoments()
 
   const history = routes.get('/history')().history
-  assert.equal(history.length, 1)
-  assert.equal(history[0].trigger.type, 'moment')
-  assert.match(history[0].trigger.reason, /说说 #m-42 发布/)
-  assert.equal(history[0].trigger.momentId, 'm-42')
+  assert.equal(history.length, 2)
+  const momentReceipt = history.find((entry) => entry.template === '说说')
+  assert.ok(momentReceipt)
+  assert.match(momentReceipt.trigger.reason, /说说 #m-42 发布/)
+  assert.equal(momentReceipt.trigger.momentId, 'm-42')
 })
 
 test('设置里的备份目录生效，一次打印一个文件', async () => {
