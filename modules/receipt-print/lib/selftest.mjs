@@ -83,6 +83,8 @@ export function testPattern(dots, height = 72) {
 // 自检二维码至少用 4 点模块（58mm 纸约 0.5mm），再小手机很难扫。
 const QR_MIN_MODULE = 4
 const TRANSPORT_SHORT = { windows: 'USB', tcp: '9100', cups: 'CUPS', preview: '预览' }
+const REQUEST_LABEL = { off: '关', owner: '只主人', all: '所有人' }
+const QR_LABEL = { auto: '自动', custom: '固定内容', off: '不打' }
 
 /** 长路径只留文件名；太长再截断，省字节让二维码更疏。 */
 function compactQrValue(value) {
@@ -181,8 +183,11 @@ export function buildSelfTestPage({
   push('normal', `目标：${printer.transport === 'preview' ? '不实际出纸' : (printer.target || '未填')}`)
   push('normal', `纸宽：${paperMm}mm · 有效 ${effectiveMm}mm · ${columns} 列`)
   push('normal', `编码：${printer.encoding || settings.encoding || 'gbk'} · 抖动：${settings.imageDither === false ? '关' : '开'}`)
-  push('normal', `切纸：${printer.cut || settings.cut || 'partial'}`)
-  push('normal', `插件：${version || '-'}`)
+  push('normal', `自动色阶：${settings.imageAutoLevel === false ? '关' : '开'} · 锐化：${settings.imageSharpen === false ? '关' : '开'}`)
+  push('normal', `亮度 ${Number(settings.imageBrightness) || 0} · 对比度 ${Number(settings.imageContrast) || 0} · 伽马 ${Number(settings.imageGamma) || 1.3}`)
+  push('normal', `切纸：${printer.cut || settings.cut || 'partial'} · 超时：${Number(settings.timeoutMs) || 8000}ms`)
+  push('normal', `消息打印：${REQUEST_LABEL[settings.printRequests || 'owner'] || '只主人'} · 说说：${settings.momentAuto === false ? '关' : '开'}`)
+  push('normal', `二维码：${QR_LABEL[settings.qrMode || 'auto'] || '自动'} · 插件：${version || '-'}`)
   push('normal', `时间：${stamp.datetime} ${stamp.weekday}`)
   sep()
 

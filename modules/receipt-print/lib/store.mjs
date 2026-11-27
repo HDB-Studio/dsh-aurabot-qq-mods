@@ -232,6 +232,7 @@ export function openStore(dir) {
     history(limit = 10) {
       return state.history.slice(0, Math.max(1, Number(limit) || 10))
     },
+    backupDir(customDir = '') { return resolveBackupTarget(dir, customDir) },
     lastRun(id) { return state.lastRun[id] || '' },
     markRun(id, date) {
       state.lastRun[id] = date

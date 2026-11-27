@@ -29,6 +29,9 @@ test('自检页：设备信息带打印机名、版本和时间', () => {
   assert.match(text, /纸宽：58mm · 有效 48mm · 32 列/)
   assert.match(text, /插件：0\.12\.0/)
   assert.match(text, /2026-11-27 10:30 星期五/)
+  assert.match(text, /伽马 1\.3/)
+  assert.match(text, /消息打印：只主人/)
+  assert.match(text, /二维码：自动/)
 })
 
 test('自检页：对齐、字号、字符、刻度都在，且有居中/右对齐样式', () => {

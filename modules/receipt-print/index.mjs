@@ -14,12 +14,12 @@ import { tick } from './lib/scheduler.mjs'
 import { imageRaster } from './lib/image.mjs'
 import { pickNewMoments, extractImageSources, timeOf, describeMoments, momentUrl } from './lib/moments.mjs'
 import { messageText, messageImages, firstUrl, htmlToText, clipText, parsePrintIntent } from './lib/requests.mjs'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { buildCalibration } from './lib/calibrate.mjs'
 import { TERMS_TITLE, TERMS_VERSION, termsAccepted, termsGate, termsPublic, termsText } from './lib/terms.mjs'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const VERSION = '0.22.0'
+const VERSION = '0.23.0'
 const STAGE = '测试'
 
 const TRIGGER_LABELS = {
@@ -307,6 +307,32 @@ export default {
       } catch (error) {
         log.warn?.(`写打印记录失败：${error.message}`)
         return null
+      }
+    }
+
+    // 自检页上的插件自身信息：模板、记录、目录和备份数量。
+    async function pluginInfo(settings) {
+      const templates = store.templates()
+      const automatic = templates.filter((t) => t.trigger && t.trigger !== 'manual').length
+      const scheduled = templates.filter((t) => t.trigger === 'schedule').length
+      const backup = store.backupDir(settings.backupDir)
+      let files = 0
+      try {
+        files = (await readdir(backup)).filter((name) => name.endsWith('.txt')).length
+      } catch {
+        // 目录还没建或读不到就显示 0
+      }
+      return {
+        title: '插件信息',
+        rows: [
+          ['插件版本', `${VERSION}（${STAGE}）`],
+          ['模板数量', `${templates.length} 个（定时 ${scheduled} · 自动 ${automatic}）`],
+          ['打印记录', `${store.history(30).length} 条`],
+          ['协议版本', TERMS_VERSION],
+          ['数据目录', store.dir],
+          ['备份目录', backup],
+          ['备份文件', `${files} 个`],
+        ],
       }
     }
 
@@ -895,7 +921,8 @@ export default {
         if (!parsed.bytes.length) return { ok: false, message: '自检指令是空的' }
         bytes = parsed.bytes
       } else {
-        const extraInfo = await collectDetails(printer, { version: VERSION })
+        const extraInfo = await collectDetails(printer, { version: VERSION, dataDir: api.dataDir() })
+        extraInfo.push(await pluginInfo(settings))
         const page = buildSelfTestPage({
           printer,
           paper,

@@ -1,6 +1,7 @@
 // 自检页用的系统/驱动信息：比 Windows 测试页更细，能查的全列出来。
 import os from 'node:os'
 import { execFile } from 'node:child_process'
+import { statfs } from 'node:fs/promises'
 
 const PLATFORM_LABEL = {
   win32: 'Windows',
@@ -18,6 +19,20 @@ export function formatDuration(seconds) {
   if (day) return `${day} 天 ${hour} 小时`
   if (hour) return `${hour} 小时 ${min} 分`
   return `${min} 分`
+}
+
+const gb = (bytes) => `${Math.round((Number(bytes) || 0) / 1024 / 1024 / 1024 * 10) / 10} GB`
+
+function networkAddresses() {
+  const list = []
+  const interfaces = os.networkInterfaces?.() || {}
+  for (const [name, items] of Object.entries(interfaces)) {
+    for (const item of items || []) {
+      if (item.internal || item.family !== 'IPv4') continue
+      list.push(`${name}:${item.address}`)
+    }
+  }
+  return list.slice(0, 6).join(' ')
 }
 
 /** 跨平台的基本信息，任何系统都能打。 */
@@ -45,22 +60,50 @@ export function basicInfo({ version = '', nodeVersion = process.versions.node } 
       return ''
     }
   })()
+  const bootAt = new Date(Date.now() - os.uptime() * 1000)
+  const proc = process.memoryUsage?.() || {}
   return [
     ['用户名', user || '未知'],
     ['计算机名', os.hostname() || '未知'],
     ['操作系统', `${PLATFORM_LABEL[os.platform()] || os.platform()} ${os.release()} (${os.arch()})`],
     ['系统版本', String(os.version?.() || '')],
     ['CPU', cpu?.model ? `${cpu.model.trim()} · ${os.cpus().length} 核` : ''],
+    ['CPU 主频', cpu?.speed ? `${cpu.speed} MHz` : ''],
+    ['CPU 负载', (os.loadavg?.() || []).map((n) => Number(n).toFixed(2)).join(' / ')],
     ['系统内存', `${memory(os.totalmem())}（空闲 ${memory(os.freemem())}）`],
     ['系统运行', formatDuration(os.uptime())],
+    ['启动时间', bootAt.toLocaleString('zh-CN', { hour12: false })],
     ['系统语言', locale],
     ['时区', timeZone],
+    ['网络地址', networkAddresses()],
     ['用户目录', os.homedir()],
     ['临时目录', os.tmpdir()],
     ['进程 ID', String(process.pid)],
+    ['进程内存', proc.rss ? `常驻 ${memory(proc.rss)} · 堆 ${memory(proc.heapUsed)}` : ''],
     ['插件版本', version || '-'],
     ['Node', String(nodeVersion || '-')],
+    ['V8', String(process.versions.v8 || '-')],
   ].filter(([, value]) => value)
+}
+
+/** 数据目录所在磁盘的容量，读不到就只报路径。 */
+export async function storageInfo(dir) {
+  const path = String(dir || '').trim()
+  if (!path) return []
+  const rows = [['数据目录', path]]
+  try {
+    const stat = await statfs(path)
+    const total = Number(stat.blocks) * Number(stat.bsize)
+    const free = Number(stat.bavail) * Number(stat.bsize)
+    const used = Math.max(0, total - free)
+    const percent = total > 0 ? Math.round((used / total) * 100) : 0
+    rows.push(['磁盘总量', gb(total)])
+    rows.push(['磁盘可用', gb(free)])
+    rows.push(['磁盘已用', `${gb(used)}（${percent}%）`])
+  } catch {
+    // 某些平台拿不到 statfs，保留路径就够了
+  }
+  return rows
 }
 
 const PS_SCRIPT = (name) => `
@@ -70,6 +113,9 @@ $n = '${String(name).replace(/'/g, "''")}'
 $p = Get-Printer -Name $n
 $d = Get-PrinterDriver -Name $p.DriverName
 $o = Get-PrinterPort -Name $p.PortName
+$c = Get-PrintConfiguration -PrinterName $n
+$all = @(Get-Printer | Select-Object -ExpandProperty Name)
+$def = (Get-CimInstance Win32_Printer -Filter "Default=True").Name
 [pscustomobject]@{
   PrinterName = $p.Name
   Model = $p.DriverName
@@ -111,7 +157,15 @@ $o = Get-PrinterPort -Name $p.PortName
   SNMPCommunity = $o.SNMPCommunity
   LprQueueName = $o.LprQueueName
   PortUrl = $o.Url
-} | ConvertTo-Json -Compress
+  ConfigPaper = $c.PaperSize
+  ConfigColor = $c.Color
+  ConfigDuplex = $c.DuplexingMode
+  ConfigQuality = $c.PrintQuality
+  ConfigCollate = $c.Collate
+  DefaultPrinter = $def
+  PrinterCount = $all.Count
+  PrinterNames = $all
+} | ConvertTo-Json -Compress -Depth 3
 `
 
 function defaultRun(command, args, timeoutMs) {
@@ -196,6 +250,19 @@ export async function windowsDetails(printerName, { run = defaultRun, timeoutMs 
     ['LPR 队列', clean(data.LprQueueName)],
     ['端口 URL', clean(data.PortUrl)],
   ].filter(([, value]) => value)
+  const config = [
+    ['纸张大小', clean(data.ConfigPaper)],
+    ['彩色', yesNo(data.ConfigColor)],
+    ['双面', clean(data.ConfigDuplex)],
+    ['打印质量', clean(data.ConfigQuality)],
+    ['逐份打印', yesNo(data.ConfigCollate)],
+  ].filter(([, value]) => value)
+  const names = Array.isArray(data.PrinterNames) ? data.PrinterNames.map(clean).filter(Boolean) : []
+  const environment = [
+    ['系统打印机', data.PrinterCount === undefined ? '' : `${data.PrinterCount} 台`],
+    ['默认打印机', clean(data.DefaultPrinter)],
+    ['队列列表', names.length ? `${names.slice(0, 8).join('、')}${names.length > 8 ? ` 等 ${names.length} 台` : ''}` : ''],
+  ].filter(([, value]) => value)
   if (Array.isArray(data.DependentFiles)) {
     for (const file of data.DependentFiles.slice(0, 6)) driver.push(['依赖', clean(file)])
   }
@@ -203,18 +270,26 @@ export async function windowsDetails(printerName, { run = defaultRun, timeoutMs 
     printer: printer.filter(([, value]) => value),
     driver: driver.filter(([, value]) => value),
     port,
+    config,
+    environment,
   }
 }
 
 /** 汇总成自检页要的分段。 */
-export async function collectDetails(printer, { version = '', platform = process.platform, run, timeoutMs } = {}) {
+export async function collectDetails(printer, { version = '', platform = process.platform, run, timeoutMs, dataDir = '' } = {}) {
   const sections = [{ title: '系统信息', rows: basicInfo({ version }) }]
+  if (dataDir) {
+    const storage = await storageInfo(dataDir)
+    if (storage.length) sections.push({ title: '存储', rows: storage })
+  }
   const details = await windowsDetails(printer?.transport === 'preview' ? '' : printer?.target, { run, timeoutMs, platform })
     .catch(() => null)
   if (details) {
     if (details.printer.length) sections.push({ title: '打印机信息', rows: details.printer })
+    if (details.config.length) sections.push({ title: '打印配置', rows: details.config })
     if (details.driver.length) sections.push({ title: '驱动程序', rows: details.driver })
     if (details.port.length) sections.push({ title: '端口', rows: details.port })
+    if (details.environment.length) sections.push({ title: '环境打印机', rows: details.environment })
   }
   return sections
 }
